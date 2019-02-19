@@ -19,12 +19,14 @@ newtype Identifier = Identifier String deriving (Show, Eq)
 -- Takes in an Identifier in its constructor
 newtype Type = Type Identifier deriving (Show, Eq)
 
+-- iBinaryOperator type
 -- Create a type for all possible binary operations
 -- Derives typeclasses show and eq
--- ⊗[SIGMA]IBinOp ::= “+” | “-” | “*” | “/” | “^” | “==”
+-- ⊗∃IBinOp ::= “+” | “-” | “*” | “/” | “^” | “==”
 data IBinOp = Plus | Minus | Mult | Div | Exponent | Equals deriving (Show, Eq)
 
--- Constructor definition
+-- Constructor definition type
+-- cDef∃ConstructorDefinition ::= name(τ*)
 -- Funkadelic functions (therefore, also constructors) have a maximum arity of one
 -- There a CDef can either have a single parameter or no parameters
 -- Derives typeclasses show and eq
@@ -33,22 +35,27 @@ data CDef =
     |   NullaryConstructor Identifier
     deriving (Show, Eq)
 
+-- Top level definition type
+-- tLd∃TopLevelDefinition :: name “= func(” name “:” Type “):”Type”{” exp “}” | “data” name “=” uDtDef
+-- Either a function definition or a data definition
+-- Derives typeclasses show and eq
 data Tld = 
         FuncDef Identifier Identifier Type Exp Type 
     |   DataDef Identifier [CDef]
     deriving (Show, Eq)
 
+-- iExpression type
+-- ie∃IExpression ::= ie1 ⊗ ie2 | name | num+
 -- Create a type for all possible expressions
 -- Derives typeclasses show and eq
--- ie[SIGMA]IExpression ::= ie1 ⊗ ie2 | name | num+
 data IExp = 
         IExp IExp IBinOp IExp 
     |   IExpVar Identifier 
     |   IExpInt Integer 
     deriving (Show, Eq)
 
--- Function calls
--- exp[SIGMA]Expression ::= x | i | s | ie | \(exp){exp}:τ | name(exp)
+-- Function calls type
+-- exp∃Expression ::= x | i | s | ie | \(exp){exp}:τ | name(exp)
 data Exp = 
         ExpVariable Identifier
     |   ExpInteger Integer
@@ -58,6 +65,7 @@ data Exp =
     |   ExpFOCall Identifier Exp
     deriving (Show, Eq)
 
+-- Check if definition is a data definition or a function definition
 tld = try dDef <|> fDef
 
 -- Check the parity of the constructor definition
@@ -114,6 +122,10 @@ lambda = do
     retType <- identifier 
     return $ ExpLambda parameter body (Type retType)
 
+-- Extract an expression
+-- Example: length([5])
+-- Where length <- identifier
+-- [5] <- parameter
 fOCall :: Parser Exp
 fOCall = do
     fName <- identifier
