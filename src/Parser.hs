@@ -9,12 +9,25 @@ import Text.Parsec.Prim hiding (try)
 import Text.Parsec.Combinator 
 import Text.ParserCombinators.Parsec
 
-newtype Type = Type Identifier deriving (Show, Eq)
-
+-- Create type called Identifier
+-- Constructor takes in a string (Token)
+-- Derives typeclasses show and eq
 newtype Identifier = Identifier String deriving (Show, Eq)
 
+-- Explicitly create type (type in haskell) called Type (type in our Funkadelic)
+-- which derives the typeclasses show and eq
+-- Takes in an Identifier in its constructor
+newtype Type = Type Identifier deriving (Show, Eq)
+
+-- Create a type for all possible binary operations
+-- Derives typeclasses show and eq
+-- ⊗[SIGMA]IBinOp ::= “+” | “-” | “*” | “/” | “^” | “==”
 data IBinOp = Plus | Minus | Mult | Div | Exponent | Equals deriving (Show, Eq)
 
+-- Constructor definition
+-- Funkadelic functions (therefore, also constructors) have a maximum arity of one
+-- There a CDef can either have a single parameter or no parameters
+-- Derives typeclasses show and eq
 data CDef =
         UnaryConstructor Identifier Type
     |   NullaryConstructor Identifier
@@ -25,12 +38,16 @@ data Tld =
     |   DataDef Identifier [CDef]
     deriving (Show, Eq)
 
+-- Create a type for all possible expressions
+-- Derives typeclasses show and eq
+-- ie[SIGMA]IExpression ::= ie1 ⊗ ie2 | name | num+
 data IExp = 
-        IExpInt Integer 
+        IExp IExp IBinOp IExp 
     |   IExpVar Identifier 
-    |   IExp IExp IBinOp IExp 
+    |   IExpInt Integer 
     deriving (Show, Eq)
 
+-- exp[SIGMA]Expression ::= x | i | s | ie | \(exp){exp}:τ | name(exp)
 data Exp = 
         ExpVariable Identifier 
     |   ExpInteger Integer
@@ -42,6 +59,7 @@ data Exp =
 
 tld = try dDef <|> fDef
 
+-- Check the parity of the constructor definition
 cDef = try unaryCDef <|> nullaryCdef
 
 unaryCDef = do
@@ -51,6 +69,7 @@ unaryCDef = do
     _ <- char ')'
     return $ UnaryConstructor name (Type paramType)
 
+-- 
 nullaryCdef = do
     name <- identifier
     return $ NullaryConstructor name
