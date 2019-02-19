@@ -47,9 +47,10 @@ data IExp =
     |   IExpInt Integer 
     deriving (Show, Eq)
 
+-- Function calls
 -- exp[SIGMA]Expression ::= x | i | s | ie | \(exp){exp}:τ | name(exp)
 data Exp = 
-        ExpVariable Identifier 
+        ExpVariable Identifier
     |   ExpInteger Integer
     |   ExpString String
     |   ExpIExp IExp
@@ -62,6 +63,8 @@ tld = try dDef <|> fDef
 -- Check the parity of the constructor definition
 cDef = try unaryCDef <|> nullaryCdef
 
+-- Extract the parameter
+-- Return a unary constructor of type identifier with the extracted parameter
 unaryCDef = do
     name <- identifier
     _ <- char '('
@@ -69,7 +72,7 @@ unaryCDef = do
     _ <- char ')'
     return $ UnaryConstructor name (Type paramType)
 
--- 
+-- Return a base constructor of type identifier
 nullaryCdef = do
     name <- identifier
     return $ NullaryConstructor name
