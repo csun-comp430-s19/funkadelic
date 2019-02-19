@@ -77,9 +77,10 @@ fDef = do
     return $ FuncDef name paramName paramType body retType
 
 expAtom :: Parser Exp
-expAtom =   ExpVariable <$> identifier
-        <|> ExpInteger <$> integer
-        <|> ExpString  <$> string'
+expAtom =   
+        ExpVariable <$> identifier
+    <|> ExpInteger <$> integer
+    <|> ExpString  <$> string'
 
 lambda :: Parser Exp
 lambda = do
@@ -107,12 +108,13 @@ exp' =
     <|> expAtom
 
 iBinOp :: Parser IBinOp
-iBinOp =    (char '+' >> return Plus)
-        <|> (char '-' >> return Minus)
-        <|> (char '*' >> return Mult)
-        <|> (char '/' >> return Div)
-        <|> (char '^' >> return Exponent)
-        <|> (string "==" >> return Equals)
+iBinOp =    
+        (char '+' >> return Plus)
+    <|> (char '-' >> return Minus)
+    <|> (char '*' >> return Mult)
+    <|> (char '/' >> return Div)
+    <|> (char '^' >> return Exponent)
+    <|> (string "==" >> return Equals)
 
 iExpAtom :: Parser IExp
 iExpAtom = (IExpInt <$> integer) <|> (IExpVar <$> identifier)
