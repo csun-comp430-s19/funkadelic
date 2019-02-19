@@ -20,23 +20,24 @@ data CDef =
     |   NullaryConstructor Identifier
     deriving (Show, Eq)
 
-data Tld = FuncDef Identifier Identifier Type Exp Type 
-        |  DataDef Identifier [CDef]
-        deriving (Show, Eq)
+data Tld = 
+        FuncDef Identifier Identifier Type Exp Type 
+    |   DataDef Identifier [CDef]
+    deriving (Show, Eq)
 
 data IExp = 
-      IExpInt Integer 
-    | IExpVar Identifier 
-    | IExp IExp IBinOp IExp 
+        IExpInt Integer 
+    |   IExpVar Identifier 
+    |   IExp IExp IBinOp IExp 
     deriving (Show, Eq)
 
 data Exp = 
-      ExpVariable Identifier 
-    | ExpInteger Integer
-    | ExpString String
-    | ExpIExp IExp
-    | ExpLambda Exp Exp Type
-    | ExpFOCall Identifier Exp
+        ExpVariable Identifier 
+    |   ExpInteger Integer
+    |   ExpString String
+    |   ExpIExp IExp
+    |   ExpLambda Exp Exp Type
+    |   ExpFOCall Identifier Exp
     deriving (Show, Eq)
 
 tld = try dDef <|> fDef
@@ -76,9 +77,10 @@ fDef = do
     return $ FuncDef name paramName paramType body retType
 
 expAtom :: Parser Exp
-expAtom =   ExpVariable <$> identifier
-        <|> ExpInteger <$> integer
-        <|> ExpString  <$> string'
+expAtom =   
+        ExpVariable <$> identifier
+    <|> ExpInteger <$> integer
+    <|> ExpString  <$> string'
 
 lambda :: Parser Exp
 lambda = do
@@ -106,12 +108,13 @@ exp' =
     <|> expAtom
 
 iBinOp :: Parser IBinOp
-iBinOp =    (char '+' >> return Plus)
-        <|> (char '-' >> return Minus)
-        <|> (char '*' >> return Mult)
-        <|> (char '/' >> return Div)
-        <|> (char '^' >> return Exponent)
-        <|> (string "==" >> return Equals)
+iBinOp =    
+        (char '+' >> return Plus)
+    <|> (char '-' >> return Minus)
+    <|> (char '*' >> return Mult)
+    <|> (char '/' >> return Div)
+    <|> (char '^' >> return Exponent)
+    <|> (string "==" >> return Equals)
 
 iExpAtom :: Parser IExp
 iExpAtom = (IExpInt <$> integer) <|> (IExpVar <$> identifier)
