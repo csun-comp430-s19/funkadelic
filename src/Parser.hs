@@ -139,7 +139,7 @@ nonEscape :: Parser Char
 nonEscape = noneOf "\\\"\0\n\r\v\t\b\f"
 
 character :: Parser String
-character = fmap return nonEscape <|> escape
+character = return <$> nonEscape <|> escape
 
 string' :: Parser String
 string' = do
