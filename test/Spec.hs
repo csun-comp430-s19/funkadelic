@@ -12,9 +12,9 @@ parseTld input = parse' tld input
 spec = do
     describe "integer expressions" $ do
         it "parses integer expressions" $ do
-            parseIExp "1+1" `shouldBe` (Right (IExp (IExpInt 1) Plus (IExpInt 1)))
-            parseIExp "x-1" `shouldBe` (Right (IExp (IExpVar (Identifier "x")) Minus (IExpInt 1)))
-            parseIExp "x*y" `shouldBe` (Right (IExp (IExpVar (Identifier "x")) Mult (IExpVar (Identifier "y"))))
+            parseIExp "1+1" `shouldBe` (Right $ IExp (IExpInt 1) Plus (IExpInt 1))
+            parseIExp "x-1" `shouldBe` (Right $ IExp (IExpVar $ Identifier "x") Minus (IExpInt 1))
+            parseIExp "x*y" `shouldBe` (Right $ IExp (IExpVar $ Identifier "x") Mult (IExpVar $ Identifier "y"))
             -- "x*y==z" unresolved bug with recursive integer expressions
     
     describe "expressions" $ do
