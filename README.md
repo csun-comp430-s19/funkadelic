@@ -1,7 +1,7 @@
 # Funkadelic
 
 ### Dependencies
-- Stack
+- <a href="https://docs.haskellstack.org/en/stable/README/">Stack</a>
 ### Running the tests
 - stack build
 - stack test --coverage
