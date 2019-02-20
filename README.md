@@ -1,12 +1,14 @@
 # Funkadelic
 
-### Dependencies:
+### Dependencies
 - Stack
-### Running the tests:
+### Running the tests
 - stack build
 - stack test --coverage
 
-### Funkadelic details:
+</br>
+
+## Funkadelic details
 
 **Language Description:** Minimalist statically-typed generic functional programming language.
 
