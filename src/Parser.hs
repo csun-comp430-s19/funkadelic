@@ -49,7 +49,7 @@ data Tld =
 -- Create a type for all possible expressions
 -- Derives typeclasses show and eq
 data IExp = 
-        IExp IExp IBinOp IExp 
+    IExp IExp IBinOp IExp 
     |   IExpVar Identifier 
     |   IExpInt Integer 
     deriving (Show, Eq)
@@ -89,6 +89,21 @@ iExp =
     try iExp' 
     <|> iExpAtom
 
+iExpAtom :: Parser IExp
+iExpAtom = 
+    IExpInt <$> integer
+    <|> IExpVar <$> identifier
+
+expAtom :: Parser Exp
+expAtom =   
+    ExpVariable <$> identifier
+    <|> ExpInteger <$> integer
+    <|> ExpString  <$> string'
+
+-- Remove spaces from a string and returns result
+removeSpaces :: String -> String
+removeSpaces = filter (/=' ')
+
 -- Extract the parameter
 -- Return a unary constructor of type identifier with the extracted parameter
 unaryCDef :: Parser CDef
@@ -127,12 +142,6 @@ fDef = do
     _ <- char '}'
     return $ FuncDef name paramName paramType body retType
 
-expAtom :: Parser Exp
-expAtom =   
-    ExpVariable <$> identifier
-    <|> ExpInteger <$> integer
-    <|> ExpString  <$> string'
-
 lambda :: Parser Exp
 lambda = do
     _ <- string "\\("
@@ -155,6 +164,14 @@ fOCall = do
     _ <- char ')'
     return $ ExpFOCall fName parameter
 
+iExp' :: Parser IExp
+iExp' =  do
+    left <- iExpAtom
+    binop <- iBinOp
+    right <- iExpAtom
+    return $ IExp left binop right
+
+-- Returns a parsed binary operator
 iBinOp :: Parser IBinOp
 iBinOp =    
     (char '+' >> return Plus)
@@ -163,18 +180,6 @@ iBinOp =
     <|> (char '/' >> return Div)
     <|> (char '^' >> return Exponent)
     <|> (string "==" >> return Equals)
-
-iExpAtom :: Parser IExp
-iExpAtom = 
-    IExpInt <$> integer
-    <|> IExpVar <$> identifier
-
-iExp' :: Parser IExp
-iExp' =  do
-    left <- iExpAtom
-    binop <- iBinOp
-    right <- iExpAtom
-    return $ IExp left binop right
 
 integer :: Parser Integer
 integer = read <$> many1 digit
@@ -205,9 +210,6 @@ identifier = do
     first <- count 1 letter
     rest <- many alphaNum
     return $ Identifier (first ++ rest)
-
-removeSpaces :: String -> String
-removeSpaces = filter (/=' ')
 
 parseInput input = parse (many fDef) "failed" (removeSpaces input)
 
