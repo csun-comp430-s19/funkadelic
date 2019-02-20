@@ -65,14 +65,27 @@ data Exp =
     |   ExpFOCall Identifier Exp
     deriving (Show, Eq)
 
--- Check if definition is a data definition or a function definition
-tld = try dDef <|> fDef
+tld :: Parser Tld
+tld = 
+        try dDef 
+    <|> fDef
 
--- Check the parity of the constructor definition
-cDef = try unaryCDef <|> nullaryCdef
+cDef :: Parser CDef
+cDef = 
+        try unaryCDef 
+    <|> nullaryCDef
 
--- Extract the parameter
--- Return a unary constructor of type identifier with the extracted parameter
+exp' :: Parser Exp
+exp' = 
+        try fOCall
+    <|> try lambda
+    <|> ExpIExp <$> (try iExp')
+    <|> expAtom
+
+iExp :: Parser IExp
+iExp = try iExp' <|> iExpAtom
+
+unaryCDef :: Parser CDef
 unaryCDef = do
     name <- identifier
     _ <- char '('
@@ -80,11 +93,12 @@ unaryCDef = do
     _ <- char ')'
     return $ UnaryConstructor name (Type paramType)
 
--- Return a base constructor of type identifier
-nullaryCdef = do
+nullaryCDef :: Parser CDef
+nullaryCDef = do
     name <- identifier
     return $ NullaryConstructor name
 
+dDef :: Parser Tld
 dDef = do
     _ <- string "data"
     name <- identifier
@@ -134,13 +148,6 @@ fOCall = do
     _ <- char ')'
     return $ ExpFOCall fName parameter
 
-
-exp' = 
-        try fOCall
-    <|> try lambda
-    <|> ExpIExp <$> (try iExp')
-    <|> expAtom
-
 iBinOp :: Parser IBinOp
 iBinOp =    
         (char '+' >> return Plus)
@@ -159,9 +166,6 @@ iExp' =  do
     binop <- iBinOp
     right <- iExpAtom
     return $ IExp left binop right
-
-iExp :: Parser IExp
-iExp = try iExp' <|> iExpAtom
 
 integer :: Parser Integer
 integer = read <$> many1 digit
