@@ -65,11 +65,13 @@ data Exp =
     |   ExpFOCall Identifier Exp
     deriving (Show, Eq)
 
+-- Check if definition is a data definition or a function definition
 tld :: Parser Tld
 tld = 
         try dDef 
     <|> fDef
 
+-- Check the parity of the constructor definition
 cDef :: Parser CDef
 cDef = 
         try unaryCDef 
@@ -83,8 +85,12 @@ exp' =
     <|> expAtom
 
 iExp :: Parser IExp
-iExp = try iExp' <|> iExpAtom
+iExp = 
+        try iExp' 
+    <|> iExpAtom
 
+-- Extract the parameter
+-- Return a unary constructor of type identifier with the extracted parameter
 unaryCDef :: Parser CDef
 unaryCDef = do
     name <- identifier
@@ -93,6 +99,7 @@ unaryCDef = do
     _ <- char ')'
     return $ UnaryConstructor name (Type paramType)
 
+-- Return a base constructor of type identifier
 nullaryCDef :: Parser CDef
 nullaryCDef = do
     name <- identifier
