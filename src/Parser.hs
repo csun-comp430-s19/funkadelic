@@ -13,26 +13,27 @@ newtype Type = Type Identifier deriving (Show, Eq)
 
 newtype Identifier = Identifier String deriving (Show, Eq)
 
-data IBinOp = Plus | Minus | Mult | Div | Exponent | Equals deriving (Show, Eq)
+data IBinOp = Plus | Minus | Mult | Div | Exponent | Equals 
+    deriving (Show, Eq)
 
 data CDef =
-        UnaryConstructor Identifier Type
+    UnaryConstructor Identifier Type
     |   NullaryConstructor Identifier
     deriving (Show, Eq)
 
 data Tld = 
-        FuncDef Identifier Identifier Type Exp Type 
+    FuncDef Identifier Identifier Type Exp Type 
     |   DataDef Identifier [CDef]
     deriving (Show, Eq)
 
 data IExp = 
-        IExpInt Integer 
+    IExpInt Integer 
     |   IExpVar Identifier 
     |   IExp IExp IBinOp IExp 
     deriving (Show, Eq)
 
 data Exp = 
-        ExpVariable Identifier 
+    ExpVariable Identifier 
     |   ExpInteger Integer
     |   ExpString String
     |   ExpIExp IExp
@@ -42,23 +43,25 @@ data Exp =
 
 tld :: Parser Tld
 tld = 
-        try dDef 
+    try dDef 
     <|> fDef
 
 cDef :: Parser CDef
 cDef = 
-        try unaryCDef 
+    try unaryCDef 
     <|> nullaryCDef
 
 exp' :: Parser Exp
 exp' = 
-        try fOCall
+    try fOCall
     <|> try lambda
     <|> ExpIExp <$> (try iExp')
     <|> expAtom
 
 iExp :: Parser IExp
-iExp = try iExp' <|> iExpAtom
+iExp = 
+    try iExp' 
+    <|> iExpAtom
 
 unaryCDef :: Parser CDef
 unaryCDef = do
@@ -97,7 +100,7 @@ fDef = do
 
 expAtom :: Parser Exp
 expAtom =   
-        ExpVariable <$> identifier
+    ExpVariable <$> identifier
     <|> ExpInteger <$> integer
     <|> ExpString  <$> string'
 
@@ -121,7 +124,7 @@ fOCall = do
 
 iBinOp :: Parser IBinOp
 iBinOp =    
-        (char '+' >> return Plus)
+    (char '+' >> return Plus)
     <|> (char '-' >> return Minus)
     <|> (char '*' >> return Mult)
     <|> (char '/' >> return Div)
@@ -129,7 +132,9 @@ iBinOp =
     <|> (string "==" >> return Equals)
 
 iExpAtom :: Parser IExp
-iExpAtom = (IExpInt <$> integer) <|> (IExpVar <$> identifier)
+iExpAtom = 
+    IExpInt <$> integer
+    <|> IExpVar <$> identifier
 
 iExp' :: Parser IExp
 iExp' =  do
@@ -151,7 +156,9 @@ nonEscape :: Parser Char
 nonEscape = noneOf "\\\"\0\n\r\v\t\b\f"
 
 character :: Parser String
-character = return <$> nonEscape <|> escape
+character = 
+    return <$> nonEscape 
+    <|> escape
 
 string' :: Parser String
 string' = do
