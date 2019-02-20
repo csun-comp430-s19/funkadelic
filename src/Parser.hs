@@ -40,10 +40,27 @@ data Exp =
     |   ExpFOCall Identifier Exp
     deriving (Show, Eq)
 
-tld = try dDef <|> fDef
+tld :: Parser Tld
+tld = 
+        try dDef 
+    <|> fDef
 
-cDef = try unaryCDef <|> nullaryCdef
+cDef :: Parser CDef
+cDef = 
+        try unaryCDef 
+    <|> nullaryCDef
 
+exp' :: Parser Exp
+exp' = 
+        try fOCall
+    <|> try lambda
+    <|> ExpIExp <$> (try iExp')
+    <|> expAtom
+
+iExp :: Parser IExp
+iExp = try iExp' <|> iExpAtom
+
+unaryCDef :: Parser CDef
 unaryCDef = do
     name <- identifier
     _ <- char '('
@@ -51,10 +68,12 @@ unaryCDef = do
     _ <- char ')'
     return $ UnaryConstructor name (Type paramType)
 
-nullaryCdef = do
+nullaryCDef :: Parser CDef
+nullaryCDef = do
     name <- identifier
     return $ NullaryConstructor name
 
+dDef :: Parser Tld
 dDef = do
     _ <- string "data"
     name <- identifier
@@ -100,13 +119,6 @@ fOCall = do
     _ <- char ')'
     return $ ExpFOCall fName parameter
 
-
-exp' = 
-        try fOCall
-    <|> try lambda
-    <|> ExpIExp <$> (try iExp')
-    <|> expAtom
-
 iBinOp :: Parser IBinOp
 iBinOp =    
         (char '+' >> return Plus)
@@ -125,9 +137,6 @@ iExp' =  do
     binop <- iBinOp
     right <- iExpAtom
     return $ IExp left binop right
-
-iExp :: Parser IExp
-iExp = try iExp' <|> iExpAtom
 
 integer :: Parser Integer
 integer = read <$> many1 digit
