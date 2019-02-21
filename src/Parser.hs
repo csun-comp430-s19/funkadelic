@@ -22,7 +22,8 @@ data CDef =
     deriving (Show, Eq)
 
 data Tld = 
-    FuncDef Identifier Identifier Type Exp Type 
+    FuncDefUnary Identifier Identifier Type Exp Type 
+    |   FuncDefNullary Identifier Exp Type
     |   DataDef Identifier [CDef]
     deriving (Show, Eq)
 
@@ -44,7 +45,8 @@ data Exp =
 tld :: Parser Tld
 tld = 
     try dDef 
-    <|> fDef
+    <|> try nullaryFDef
+    <|> unaryFDef
 
 cDef :: Parser CDef
 cDef = 
@@ -84,8 +86,8 @@ dDef = do
     cDefs <- many1 cDef
     return $ DataDef name cDefs
 
-fDef :: Parser Tld
-fDef = do
+unaryFDef :: Parser Tld
+unaryFDef = do
     name <- identifier
     _ <- string "=func("
     paramName <- identifier
@@ -96,7 +98,17 @@ fDef = do
     _ <- char '{'
     body <- exp'
     _ <- char '}'
-    return $ FuncDef name paramName paramType body retType
+    return $ FuncDefUnary name paramName paramType body retType
+
+nullaryFDef :: Parser Tld
+nullaryFDef = do
+    name <- identifier
+    _ <- string "=func():"
+    retType <- Type <$> identifier
+    _ <- char '{'
+    body <- exp'
+    _ <- char '}'
+    return $ FuncDefNullary name body retType
 
 expAtom :: Parser Exp
 expAtom =   
@@ -176,6 +188,6 @@ identifier = do
 removeSpaces :: String -> String
 removeSpaces = filter (/=' ')
 
-parseInput input = parse (many fDef) "failed" (removeSpaces input)
+parseInput input = parse (many unaryFDef) "failed" (removeSpaces input)
 
 parse' parser input = parse parser "failed" input
