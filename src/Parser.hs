@@ -120,6 +120,8 @@ nullaryCDef = do
     name <- identifier
     return $ NullaryConstructor name
 
+-- Data definition
+-- 
 dDef :: Parser Tld
 dDef = do
     _ <- string "data"
@@ -181,6 +183,8 @@ iBinOp =
     <|> (char '^' >> return Exponent)
     <|> (string "==" >> return Equals)
 
+--
+-- numNumeric ::= “0” | “1” | “2” | “3” | “4” | “5” | “6” | “7” | “8” | “9”
 integer :: Parser Integer
 integer = read <$> many1 digit
 
@@ -205,9 +209,11 @@ string' = do
     char '"'
     return $ concat strings
 
+-- Ensures the first character is alphabetical (a letter)
+-- Ensures the rest of the string is alphanumeric
 identifier :: Parser Identifier
 identifier = do
-    first <- count 1 letter
+    first <- count 1 letter -- run count 1 letter and bind it to first
     rest <- many alphaNum
     return $ Identifier (first ++ rest)
 
