@@ -35,11 +35,13 @@ spec = do
             parseExp "\"xyz\"" `shouldBe` (Right $ ExpString "xyz")
             parseExp "\\(x){x}:String" `shouldBe` (Right (ExpLambda (ExpVariable $ Identifier "x") (ExpVariable $ Identifier "x") (Type $ Identifier "String")))
             parseExp "name(x)" `shouldBe` (Right (ExpFOCall (Identifier "name") (ExpVariable $ Identifier "x")))
+            parseExp "x*y" `shouldBe` (Right $ ExpIExp $ IExp (IExpVar $ Identifier "x") Mult (IExpVar $ Identifier "y"))
             -- parseExp "name()" `shouldBe` (Right (ExpFOCall (Identifier "name") (ExpVariable $ Identifier "x")))
 
     describe "top level function and data definitions" $ do
         it "parses tlds" $ do
             parseTld "datanewType=Nullary" `shouldBe` (Right (DataDef (Identifier "newType") [NullaryConstructor $ Identifier "Nullary"]))
+            parseTld "datanewType=Calculate(Integer)" `shouldBe` (Right (DataDef (Identifier "newType") [UnaryConstructor (Identifier "Calculate") (Type $ Identifier "Integer")]))
             -- unresolved bug with multiple constructors
             parseTld "funk=func(a:string):string{a}" `shouldBe` (Right (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "string") (ExpVariable $ Identifier "a") (Type $ Identifier "string")))
             parseTld "funk=func():string{a}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpVariable $ Identifier "a") (Type $ Identifier "string")))
