@@ -39,7 +39,8 @@ data Exp =
     |   ExpString String
     |   ExpIExp IExp
     |   ExpLambda Exp Exp Type
-    |   ExpFOCall Identifier Exp
+    |   ExpUnaryFOCall Identifier Exp
+    |   ExpNullaryFOCall Identifier
     deriving (Show, Eq)
 
 tld :: Parser Tld
@@ -55,7 +56,8 @@ cDef =
 
 exp' :: Parser Exp
 exp' = 
-    try fOCall
+    try unaryFOCall
+    <|> try nullaryFOCall
     <|> try lambda
     <|> ExpIExp <$> (try iExp')
     <|> expAtom
@@ -126,13 +128,19 @@ lambda = do
     retType <- identifier 
     return $ ExpLambda parameter body (Type retType)
 
-fOCall :: Parser Exp
-fOCall = do
+unaryFOCall :: Parser Exp
+unaryFOCall = do
     fName <- identifier
     _ <- char '('
     parameter <- expAtom
     _ <- char ')'
-    return $ ExpFOCall fName parameter
+    return $ ExpUnaryFOCall fName parameter
+
+nullaryFOCall :: Parser Exp
+nullaryFOCall = do
+    fName <- identifier
+    _ <- string "()"
+    return $ ExpNullaryFOCall fName
 
 iBinOp :: Parser IBinOp
 iBinOp =    
