@@ -24,7 +24,9 @@ spec = do
             parseExp "12323232" `shouldBe` (Right $ ExpInteger 12323232)
             parseExp "\"xyz\"" `shouldBe` (Right $ ExpString "xyz")
             parseExp "\\(x){x}:String" `shouldBe` (Right (ExpLambda (ExpVariable $ Identifier "x") (ExpVariable $ Identifier "x") (Type $ Identifier "String")))
-            parseExp "name(x)" `shouldBe` (Right (ExpFOCall (Identifier "name") (ExpVariable $ Identifier "x")))
+            parseExp "name(x)" `shouldBe` (Right (ExpUnaryFOCall (Identifier "name") (ExpVariable $ Identifier "x")))
+            parseExp "name()" `shouldBe` (Right (ExpNullaryFOCall (Identifier "name")))
+
     
     describe "top level function and data definitions" $ do
         it "parses tlds" $ do
