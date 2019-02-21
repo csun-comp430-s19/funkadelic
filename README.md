@@ -1,5 +1,7 @@
 # Funkadelic
 
+[![Build Status](https://travis-ci.com/csun-comp430-s19/Funkadelic.svg?branch=master)](https://travis-ci.com/csun-comp430-s19/Funkadelic)
+
 ### Dependencies
 - <a href="https://docs.haskellstack.org/en/stable/README/">Stack</a>
 ### Running the tests
@@ -8,7 +10,7 @@
 
 </br>
 
-## Funkadelic details
+## Details
 
 **Language Description:** Minimalist statically-typed generic functional programming language.
 
