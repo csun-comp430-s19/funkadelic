@@ -166,6 +166,7 @@ fOCall = do
     _ <- char ')'
     return $ ExpFOCall fName parameter
 
+-- Takes an iExpression and puts it into context of Parser IExp
 iExp' :: Parser IExp
 iExp' =  do
     left <- iExpAtom
@@ -173,7 +174,8 @@ iExp' =  do
     right <- iExpAtom
     return $ IExp left binop right
 
--- Returns a parsed binary operator
+-- Parses a binary operation
+-- If a case does not pass, tries the next case
 iBinOp :: Parser IBinOp
 iBinOp =    
     (char '+' >> return Plus)
