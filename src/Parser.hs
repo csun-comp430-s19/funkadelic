@@ -9,21 +9,22 @@ import Text.Parsec.Prim hiding (try)
 import Text.Parsec.Combinator 
 import Text.ParserCombinators.Parsec
 
--- Create type called Identifier
--- Constructor takes in a string (Token)
--- Derives typeclasses show and eq
-newtype Identifier = Identifier String deriving (Show, Eq)
-
 -- Explicitly create type (type in haskell) called Type (type in our Funkadelic)
 -- which derives the typeclasses show and eq
 -- Takes in an Identifier in its constructor
 newtype Type = Type Identifier deriving (Show, Eq)
 
+-- Create type called Identifier
+-- Constructor takes in a string (Token)
+-- Derives typeclasses show and eq
+newtype Identifier = Identifier String deriving (Show, Eq)
+
 -- iBinaryOperator type
 -- Create a type for all possible binary operations
 -- Derives typeclasses show and eq
 -- ⊗∃IBinOp ::= “+” | “-” | “*” | “/” | “^” | “==”
-data IBinOp = Plus | Minus | Mult | Div | Exponent | Equals deriving (Show, Eq)
+data IBinOp = Plus | Minus | Mult | Div | Exponent | Equals 
+    deriving (Show, Eq)
 
 -- Constructor definition type
 -- cDef∃ConstructorDefinition ::= name(τ*)
@@ -50,9 +51,9 @@ data Tld =
 -- Create a type for all possible expressions
 -- Derives typeclasses show and eq
 data IExp = 
-    IExp IExp IBinOp IExp 
+    IExpInt Integer 
     |   IExpVar Identifier 
-    |   IExpInt Integer 
+    |   IExp IExp IBinOp IExp 
     deriving (Show, Eq)
 
 -- Function calls type
@@ -92,21 +93,6 @@ iExp :: Parser IExp
 iExp = 
     try iExp' 
     <|> iExpAtom
-
-iExpAtom :: Parser IExp
-iExpAtom = 
-    IExpInt <$> integer
-    <|> IExpVar <$> identifier
-
-expAtom :: Parser Exp
-expAtom =   
-    ExpVariable <$> identifier
-    <|> ExpInteger <$> integer
-    <|> ExpString  <$> string'
-
--- Remove spaces from a string and returns result
-removeSpaces :: String -> String
-removeSpaces = filter (/=' ')
 
 -- Extract the parameter
 -- Return a unary constructor of type identifier with the extracted parameter
@@ -174,6 +160,10 @@ lambda = do
     retType <- identifier 
     return $ ExpLambda parameter body (Type retType)
 
+-- Extract an expression
+-- Example: length([5])
+-- Where length <- identifier
+-- [5] <- parameter
 unaryFOCall :: Parser Exp
 unaryFOCall = do
     fName <- identifier
@@ -188,6 +178,8 @@ nullaryFOCall = do
     _ <- string "()"
     return $ ExpNullaryFOCall fName
 
+-- Parses a binary operation
+-- If a case does not pass, tries the next case
 iBinOp :: Parser IBinOp
 iBinOp =    
     (char '+' >> return Plus)
@@ -196,6 +188,19 @@ iBinOp =
     <|> (char '/' >> return Div)
     <|> (char '^' >> return Exponent)
     <|> (string "==" >> return Equals)
+
+iExpAtom :: Parser IExp
+iExpAtom = 
+    IExpInt <$> integer
+    <|> IExpVar <$> identifier
+
+-- Takes an iExpression and puts it into context of Parser IExp
+iExp' :: Parser IExp
+iExp' =  do
+    left <- iExpAtom
+    binop <- iBinOp
+    right <- iExpAtom
+    return $ IExp left binop right
 
 --
 -- numNumeric ::= “0” | “1” | “2” | “3” | “4” | “5” | “6” | “7” | “8” | “9”
@@ -231,6 +236,7 @@ identifier = do
     rest <- many alphaNum
     return $ Identifier (first ++ rest)
 
+-- Remove spaces from a string and returns result
 removeSpaces :: String -> String
 removeSpaces = filter (/=' ')
 
