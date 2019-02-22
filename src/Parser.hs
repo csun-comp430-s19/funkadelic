@@ -104,12 +104,6 @@ unaryCDef = do
     _ <- char ')'
     return $ UnaryConstructor name (Type paramType)
 
--- Return a base constructor of type identifier
-nullaryCDef :: Parser CDef
-nullaryCDef = do
-    name <- identifier
-    return $ NullaryConstructor name
-
 -- Data definition
 -- 
 dDef :: Parser Tld
@@ -143,6 +137,12 @@ nullaryFDef = do
     body <- exp'
     _ <- char '}'
     return $ FuncDefNullary name body retType
+-- Return a base constructor of type identifier
+nullaryCDef :: Parser CDef
+nullaryCDef = do
+    name <- identifier
+    _ <- string "()"
+    return $ NullaryConstructor name
 
 expAtom :: Parser Exp
 expAtom =   
