@@ -14,6 +14,16 @@
 
 **Planned Restrictions:** Funkadelic will only have functions of maximum arity 1.
 
+**Non-Trivial Feature #1:**
+Typeclasses (and its prerequisite parametric polymorphism)
+
+**Non-Trivial Feature #2:**
+Algebraic data-types, typechecker; Users will be able to define and combine types using sum, product and exponent (function types)
+
+**Non-Trivial Feature #3:** Pattern matching; Users will be able to pattern match sum types on constructors, and extract data.
+
+**Work Planned for Custom Milestone:** Finish the typechecker
+
 **Syntax:**
 
 - i∃Z        x∃Variable s∃String
@@ -45,13 +55,3 @@
 - cDef∃ConstructorDefinition ::= name(τ∗)
 
 - uDtDef∃UserDatatypeDefinition ::= cDef | cDef "|" uDtDef
-
-**Non-Trivial Feature #1:**
-Typeclasses (and its prerequisite parametric polymorphism)
-
-**Non-Trivial Feature #2:**
-Algebraic data-types, typechecker; Users will be able to define and combine types using sum, product and exponent (function types)
-
-**Non-Trivial Feature #3:** Pattern matching; Users will be able to pattern match sum types on constructors, and extract data.
-
-**Work Planned for Custom Milestone:** Finish the typechecker
