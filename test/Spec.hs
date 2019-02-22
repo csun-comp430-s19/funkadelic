@@ -22,7 +22,6 @@ spec = do
             parseIExp "2^y" `shouldBe` (Right $ IExp (IExpInt 2) Exponent (IExpVar $ Identifier "y"))
             -- parseIExp "\02^y" `shouldBe` (Left "failed" Message)
 
-            -- parseIExp "x/0" `shouldBe` (Right $ IExp (IExpVar $ Identifier "x") Div (IExpInt 0)) -- should be changed to error later
             -- parseIExp "2*x+y" `shouldBe` (Right $ IExp (IExp (IExpInt 2) Mult (IExpVar $ Identifier "x")) Plus (IExpVar $ Identifier "y"))
 
             -- "x*y==z" unresolved bug with recursive integer expressions
