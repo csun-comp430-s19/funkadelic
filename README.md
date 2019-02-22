@@ -16,35 +16,35 @@
 
 **Syntax:**
 
-i∃Z        x∃Variable s∃String
+- i∃Z        x∃Variable s∃String
 
-τ∃Type ::= &quot;int&quot; | &quot;string&quot; |τ &quot;-\&gt;&quot; τ **Function type** | uDtName **A user defined type can contain 0 or more other types**
+- τ∃Type ::= "int" | "string" |τ "->" τ **Function type** | uDtName **A user defined type can contain 0 or more other types**
 
-tLd∃TopLevelDefinition :: name &quot;= func(&quot; name &quot;:&quot; Type &quot;):&quot;Type&quot;{&quot; exp &quot;}&quot; | &quot;data&quot; name &quot;=&quot; uDtDef
+- tLd∃TopLevelDefinition :: name "= func(" name ":" Type "):"Type"{" exp "}" | "data" name "=" uDtDef
 
-uDtName∃UserDefinedName ::= name
+- uDtName∃UserDefinedName ::= name
 
-ie∃IExpression ::= ie1 ⊗ ie2 | name | num+
+- ie∃IExpression ::= ie1 ⊗ ie2 | name | num+
 
-⊗∃IBinOp ::= &quot;+&quot; | &quot;-&quot; | &quot;\*&quot; | &quot;/&quot; | &quot;^&quot; | &quot;==&quot;
+- ⊗∃IBinOp ::= "+" | "-" | "\*" | "/" | "^" | "=="
 
-name∃Name ::= alphaUpper |alpha name| namenum | name alpha **Function name must start with alpha character**
+- name∃Name ::= alphaUpper |alpha name| namenum | name alpha **Function name must start with alpha character**
 
-alpha∃AlphaCharacter ::= alphaLower | alphaUpper
+- alpha∃AlphaCharacter ::= alphaLower | alphaUpper
 
-alphaLower∃AlphaLowerCaseCharacter ::= &quot;a&quot; | &quot;b&quot; | &quot;c&quot; …
+- alphaLower∃AlphaLowerCaseCharacter ::= "a" | "b" | "c" …
 
-alphaUpper∃AlphaUpperCaseCharacter ::= &quot;a&quot; | &quot;b&quot; | &quot;c&quot; …
+- alphaUpper∃AlphaUpperCaseCharacter ::= "A" | "B" | "C" …
 
-num∃Numeric ::= &quot;0&quot; | &quot;1&quot; | &quot;2&quot; | &quot;3&quot; | &quot;4&quot; | &quot;5&quot; | &quot;6&quot; | &quot;7&quot; | &quot;8&quot; | &quot;9&quot;
+- num∃Numeric ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
-fDef∃FunctionDefinition ::= name(exp1:τ):τ{exp2} | name():τ{exp1}
+- fDef∃FunctionDefinition ::= name(exp1:τ):τ{exp2} | name():τ{exp1}
 
-exp∃Expression ::= x | i | s | ie | \(exp){exp}:τ | name(exp) **Function call**
+- exp∃Expression ::= x | i | s | ie | \(exp){exp}:τ | name(exp) **Function call**
 
-cDef∃ConstructorDefinition ::= name(τ∗)
+- cDef∃ConstructorDefinition ::= name(τ∗)
 
-uDtDef∃UserDatatypeDefinition ::= cDef | cDef &quot;|&quot; uDtDef
+- uDtDef∃UserDatatypeDefinition ::= cDef | cDef "|" uDtDef
 
 **Non-Trivial Feature #1:**
 Typeclasses (and its prerequisite parametric polymorphism)
