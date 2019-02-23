@@ -5,9 +5,9 @@ import Test.Hspec
 main :: IO ()
 main = hspec spec
 
-parseIExp input = parse' iExp input
-parseExp input = parse' exp' input
-parseTld input = parse' tld input
+parseIExp input = parse' iExpParser input
+parseExp input = parse' expParser input
+parseTld input = parse' tldParser input
 
 spec = do
     describe "integer expressions" $ do
