@@ -16,21 +16,19 @@ newtype Type = Type Identifier deriving (Show, Eq)
 
 -- Create type called Identifier
 -- Constructor takes in a string (Token)
--- Derives typeclasses show and eq
 newtype Identifier = Identifier String deriving (Show, Eq)
 
 -- iBinaryOperator type
 -- Create a type for all possible binary operations
--- Derives typeclasses show and eq
 -- ⊗∃IBinOp ::= “+” | “-” | “*” | “/” | “^” | “==”
 data IBinOp = Plus | Minus | Mult | Div | Exponent | Equals 
     deriving (Show, Eq)
 
 -- Constructor definition type
+-- Equivalent to an AST of CDef
 -- cDefParser∃ConstructorDefinition ::= name(τ*)
 -- Funkadelic functions (therefore, also constructors) have a maximum arity of one
 -- There a CDef can either have a single parameter or no parameters
--- Derives typeclasses show and eq
 data CDef =
     UnaryConstructor Identifier Type
     |   NullaryConstructor Identifier
@@ -39,7 +37,6 @@ data CDef =
 -- Top level definition type
 -- tLd∃TopLevelDefinition :: name “= func(” name “:” Type “):”Type”{” exp “}” | “data” name “=” uDtDef
 -- Either a function definition or a data definition
--- Derives typeclasses show and eq
 data Tld = 
     FuncDefUnary Identifier Identifier Type Exp Type 
     |   FuncDefNullary Identifier Exp Type
@@ -49,14 +46,13 @@ data Tld =
 -- iExpression type
 -- ie∃IExpression ::= ie1 ⊗ ie2 | name | num+
 -- Create a type for all possible expressions
--- Derives typeclasses show and eq
 data IExp = 
     IExpInt Integer 
     |   IExpVar Identifier 
     |   IExp IExp IBinOp IExp 
     deriving (Show, Eq)
 
--- Function calls type
+-- Expression type
 -- exp∃Expression ::= x | i | s | ie | \(exp){exp}:τ | name(exp)
 data Exp = 
     ExpVariable Identifier 
@@ -68,19 +64,20 @@ data Exp =
     |   ExpNullaryFOCall Identifier
     deriving (Show, Eq)
 
--- Check if definition is a data definition or a function definition
+-- Parser for a top level definition
 tldParser :: Parser Tld
 tldParser = 
     try dDef 
     <|> try nullaryFDef
     <|> unaryFDef
 
--- Check the parity of the constructor definition
+-- Parser for a constructor definition
 cDefParser :: Parser CDef
 cDefParser = 
     try unaryCDef 
     <|> nullaryCDef
 
+-- Parser for an expression
 expParser :: Parser Exp
 expParser = 
     try unaryFOCall
@@ -89,13 +86,47 @@ expParser =
     <|> ExpIExp <$> (try iExpTerm)
     <|> expAtom
 
+-- Basic units of an expression
+expAtom :: Parser Exp
+expAtom =   
+    ExpVariable <$> identifier
+    <|> ExpInteger <$> integer
+    <|> ExpString  <$> string'
+
+-- Parser for an integer expression
 iExpParser :: Parser IExp
 iExpParser = 
     try iExpTerm
     <|> iExpAtom
 
--- Extract the parameter
--- Return a unary constructor of type identifier with the extracted parameter
+-- Extract the operands and binary operator
+-- Lifts the extracted values into the monad IExp
+iExpTerm :: Parser IExp
+iExpTerm =  do
+    left <- iExpAtom
+    binop <- iBinOp
+    right <- iExpParser
+    return $ IExp left binop right
+
+-- Parses a binary operation
+-- If a case does not pass, tries the next case
+iBinOp :: Parser IBinOp
+iBinOp =    
+    (char '+' >> return Plus)
+    <|> (char '-' >> return Minus)
+    <|> (char '*' >> return Mult)
+    <|> (char '/' >> return Div)
+    <|> (char '^' >> return Exponent)
+    <|> (string "==" >> return Equals)
+
+-- Basic units of an integer expression
+iExpAtom :: Parser IExp
+iExpAtom = 
+    IExpInt <$> integer
+    <|> IExpVar <$> identifier
+
+-- Extract the name and parameter
+-- Lifts the extracted values into the monad UnaryConstructor
 unaryCDef :: Parser CDef
 unaryCDef = do
     name <- identifier
@@ -104,16 +135,26 @@ unaryCDef = do
     _ <- char ')'
     return $ UnaryConstructor name (Type paramType)
 
--- Data definition
--- 
+-- Extract the name
+-- Lifts the extracted values into the monad NullaryConstructor
+nullaryCDef :: Parser CDef
+nullaryCDef = do
+    name <- identifier
+    _ <- string "()"
+    return $ NullaryConstructor name
+
+-- Extract the name and constructor definitions
+-- Lifts the extracted values into the monad UnaryConstructor
 dDef :: Parser Tld
 dDef = do
     _ <- string "data"
     name <- identifier
     _ <- char '='
     cDefs <- many1 cDefParser
-    return $ DataDef name cDefs
+    return $ DataDef name cDefs -- Note: cDefs is a list of constructor defs
 
+-- Extract the name and parameter name & type, return type, and expression
+-- Lifts the extracted values into the monad FuncDefUnary
 unaryFDef :: Parser Tld
 unaryFDef = do
     name <- identifier
@@ -128,6 +169,8 @@ unaryFDef = do
     _ <- char '}'
     return $ FuncDefUnary name paramName paramType body retType
 
+-- Extract the name, return type, and expression
+-- Lifts the extracted values into the monad FuncDefNullary
 nullaryFDef :: Parser Tld
 nullaryFDef = do
     name <- identifier
@@ -137,19 +180,9 @@ nullaryFDef = do
     body <- expParser
     _ <- char '}'
     return $ FuncDefNullary name body retType
--- Return a base constructor of type identifier
-nullaryCDef :: Parser CDef
-nullaryCDef = do
-    name <- identifier
-    _ <- string "()"
-    return $ NullaryConstructor name
 
-expAtom :: Parser Exp
-expAtom =   
-    ExpVariable <$> identifier
-    <|> ExpInteger <$> integer
-    <|> ExpString  <$> string'
-
+-- Extract the parameter, body, and return type
+-- Lifts the extracted values into the monad ExpLambda
 lambda :: Parser Exp
 lambda = do
     _ <- string "\\("
@@ -160,10 +193,8 @@ lambda = do
     retType <- identifier 
     return $ ExpLambda parameter body (Type retType)
 
--- Extract an expression
--- Example: length([5])
--- Where length <- identifier
--- [5] <- parameter
+-- Extract the function name and parameter (only one)
+-- Lifts the extracted values into the monad ExpUnaryFOCall
 unaryFOCall :: Parser Exp
 unaryFOCall = do
     fName <- identifier
@@ -172,37 +203,25 @@ unaryFOCall = do
     _ <- char ')'
     return $ ExpUnaryFOCall fName parameter
 
+-- Extract the function name
+-- Lifts the extracted values into the monad ExpNullaryFOCall
 nullaryFOCall :: Parser Exp
 nullaryFOCall = do
     fName <- identifier
     _ <- string "()"
     return $ ExpNullaryFOCall fName
 
--- Parses a binary operation
--- If a case does not pass, tries the next case
-iBinOp :: Parser IBinOp
-iBinOp =    
-    (char '+' >> return Plus)
-    <|> (char '-' >> return Minus)
-    <|> (char '*' >> return Mult)
-    <|> (char '/' >> return Div)
-    <|> (char '^' >> return Exponent)
-    <|> (string "==" >> return Equals)
 
-iExpAtom :: Parser IExp
-iExpAtom = 
-    IExpInt <$> integer
-    <|> IExpVar <$> identifier
+-- Extract the function name
+-- Lifts the extracted values into the monad Identifier
+-- Note: Identifiers must start with an alphabetical character
+identifier :: Parser Identifier
+identifier = do
+    first <- count 1 letter -- run count 1 letter and bind it to first
+    rest <- many alphaNum
+    return $ Identifier (first ++ rest)
 
--- Takes an iExpression and puts it into context of Parser IExp
-iExpTerm :: Parser IExp
-iExpTerm =  do
-    left <- iExpAtom
-    binop <- iBinOp
-    right <- iExpParser
-    return $ IExp left binop right
-
---
+-- Ensures an integer is composed of digits 0-9
 -- numNumeric ::= “0” | “1” | “2” | “3” | “4” | “5” | “6” | “7” | “8” | “9”
 integer :: Parser Integer
 integer = read <$> many1 digit
@@ -228,15 +247,7 @@ string' = do
     char '"'
     return $ concat strings
 
--- Ensures the first character is alphabetical (a letter)
--- Ensures the rest of the string is alphanumeric
-identifier :: Parser Identifier
-identifier = do
-    first <- count 1 letter -- run count 1 letter and bind it to first
-    rest <- many alphaNum
-    return $ Identifier (first ++ rest)
-
--- Remove spaces from a string and returns result
+-- Removes spaces from a string
 removeSpaces :: String -> String
 removeSpaces = filter (/=' ')
 
