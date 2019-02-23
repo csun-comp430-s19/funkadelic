@@ -27,7 +27,7 @@ data IBinOp = Plus | Minus | Mult | Div | Exponent | Equals
     deriving (Show, Eq)
 
 -- Constructor definition type
--- cDef∃ConstructorDefinition ::= name(τ*)
+-- cDefParser∃ConstructorDefinition ::= name(τ*)
 -- Funkadelic functions (therefore, also constructors) have a maximum arity of one
 -- There a CDef can either have a single parameter or no parameters
 -- Derives typeclasses show and eq
@@ -69,29 +69,29 @@ data Exp =
     deriving (Show, Eq)
 
 -- Check if definition is a data definition or a function definition
-tld :: Parser Tld
-tld = 
+tldParser :: Parser Tld
+tldParser = 
     try dDef 
     <|> try nullaryFDef
     <|> unaryFDef
 
 -- Check the parity of the constructor definition
-cDef :: Parser CDef
-cDef = 
+cDefParser :: Parser CDef
+cDefParser = 
     try unaryCDef 
     <|> nullaryCDef
 
-exp' :: Parser Exp
-exp' = 
+expParser :: Parser Exp
+expParser = 
     try unaryFOCall
     <|> try nullaryFOCall
     <|> try lambda
-    <|> ExpIExp <$> (try iExp')
+    <|> ExpIExp <$> (try iExpTerm)
     <|> expAtom
 
-iExp :: Parser IExp
-iExp = 
-    try iExp' 
+iExpParser :: Parser IExp
+iExpParser = 
+    try iExpTerm
     <|> iExpAtom
 
 -- Extract the parameter
@@ -111,7 +111,7 @@ dDef = do
     _ <- string "data"
     name <- identifier
     _ <- char '='
-    cDefs <- many1 cDef
+    cDefs <- many1 cDefParser
     return $ DataDef name cDefs
 
 unaryFDef :: Parser Tld
@@ -124,7 +124,7 @@ unaryFDef = do
     _ <- string "):"
     retType <- Type <$> identifier
     _ <- char '{'
-    body <- exp'
+    body <- expParser
     _ <- char '}'
     return $ FuncDefUnary name paramName paramType body retType
 
@@ -134,7 +134,7 @@ nullaryFDef = do
     _ <- string "=func():"
     retType <- Type <$> identifier
     _ <- char '{'
-    body <- exp'
+    body <- expParser
     _ <- char '}'
     return $ FuncDefNullary name body retType
 -- Return a base constructor of type identifier
@@ -155,7 +155,7 @@ lambda = do
     _ <- string "\\("
     parameter <- ExpVariable <$> identifier
     _ <- string "){"
-    body <- exp'
+    body <- expParser
     _ <- string "}:"
     retType <- identifier 
     return $ ExpLambda parameter body (Type retType)
