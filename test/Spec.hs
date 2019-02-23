@@ -20,12 +20,10 @@ spec = do
             parseIExp "1" `shouldBe` (Right $ IExpInt 1)
             parseIExp "2==y" `shouldBe` (Right $ IExp (IExpInt 2) Equals (IExpVar $ Identifier "y"))
             parseIExp "2^y" `shouldBe` (Right $ IExp (IExpInt 2) Exponent (IExpVar $ Identifier "y"))
-            -- parseIExp "\02^y" `shouldBe` (Left "failed" Message)
+            parseIExp "2^y*3-4" `shouldBe` (Right (IExp (IExpInt 2) Exponent (IExp (IExpVar $ Identifier "y") Mult (IExp (IExpInt 3) Minus (IExpInt 4)))))
+            parseIExp "2*x+y" `shouldBe` (Right (IExp (IExpInt 2) Mult (IExp (IExpVar $ Identifier "x") Plus (IExpVar $ Identifier "y"))))
+            parseIExp "x*y==z" `shouldBe` (Right (IExp (IExpVar $ Identifier "x") Mult (IExp (IExpVar $ Identifier "y") Equals (IExpVar $ Identifier "z"))))
 
-            -- parseIExp "2*x+y" `shouldBe` (Right $ IExp (IExp (IExpInt 2) Mult (IExpVar $ Identifier "x")) Plus (IExpVar $ Identifier "y"))
-
-            -- "x*y==z" unresolved bug with recursive integer expressions
-    
     describe "expressions" $ do
         it "parses expressions" $ do
             parseExp "x" `shouldBe` (Right $ ExpVariable $ Identifier "x")

@@ -195,11 +195,11 @@ iExpAtom =
     <|> IExpVar <$> identifier
 
 -- Takes an iExpression and puts it into context of Parser IExp
-iExp' :: Parser IExp
-iExp' =  do
+iExpTerm :: Parser IExp
+iExpTerm =  do
     left <- iExpAtom
     binop <- iBinOp
-    right <- iExpAtom
+    right <- iExpParser
     return $ IExp left binop right
 
 --
