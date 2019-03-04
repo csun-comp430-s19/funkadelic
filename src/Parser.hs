@@ -260,4 +260,4 @@ removeSpaces = filter (/=' ')
 
 parseInput input = parse (many unaryFDef) "failed" (removeSpaces input)
 
-parse' parser input = parse parser "failed" input
+parse' parser input = parse (spaces *> parser <* eof) "failed" input
