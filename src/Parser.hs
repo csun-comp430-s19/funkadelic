@@ -4,6 +4,7 @@ module Parser where
 import System.IO
 import Text.Parsec hiding (try)
 import Control.Monad
+import Data.Char (isLetter, isDigit)
 import Text.Parsec.Pos
 import Text.Parsec.Prim hiding (try)
 import Text.Parsec.Combinator 
@@ -217,14 +218,20 @@ nullaryFOCall = do
 -- Note: Identifiers must start with an alphabetical character
 identifier :: Parser Identifier
 identifier = do
-    first <- count 1 letter -- run count 1 letter and bind it to first
-    rest <- many alphaNum
-    return $ Identifier (first ++ rest)
+    first <- firstChar -- should be a letter
+    rest <- many followingChars
+    return $ Identifier (first:rest)
+  where
+    firstChar = satisfy (\a -> isLetter a)
+    followingChars = satisfy (\a -> isDigit a || isLetter a)
 
 -- Ensures an integer is composed of digits 0-9
 -- numNumeric ::= “0” | “1” | “2” | “3” | “4” | “5” | “6” | “7” | “8” | “9”
 integer :: Parser Integer
-integer = read <$> many1 digit
+integer = do
+    n <- many1 digit
+    return (read n)
+
 
 escape :: Parser String
 escape = do
