@@ -1,9 +1,13 @@
 {-# LANGUAGE FlexibleContexts #-}
-import Parser
+import Parser hiding (type')
+import Typechecker
 import Test.Hspec
 
 main :: IO ()
 main = hspec spec
+
+type' :: String -> Type
+type' s = Type $ Identifier s
 
 parseIExp input = parse' iExpParser input
 parseExp input = parse' expParser input
@@ -44,6 +48,11 @@ spec = do
             parseTld "funk=func():string{a}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpVariable $ Identifier "a") (Type $ Identifier "string")))
             parseTld "funk=func():string{x*y}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExpVar (Identifier "y")))) (Type (Identifier "string"))))
             parseTld "funk=func():string{x*y+x==5}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string"))))
+    
+
+    describe "Typechecking" $ do
+        it "typechecks integer expressions" $ do
+            typecheck (IExp (IExpInt 1) Plus (IExpInt 1)) `shouldBe` (Just $ type' "Int")
 
 
 
