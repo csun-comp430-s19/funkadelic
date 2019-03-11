@@ -16,7 +16,7 @@ newtype Type = Type Identifier deriving (Show, Eq)
 
 -- Create type called Identifier
 -- Constructor takes in a string (Token)
-newtype Identifier = Identifier String deriving (Show, Eq)
+newtype Identifier = Identifier String deriving (Show, Eq, Ord)
 
 -- iBinaryOperator type
 -- Create a type for all possible binary operations
@@ -30,7 +30,7 @@ data IBinOp = Plus | Minus | Mult | Div | Exponent | Equals
 -- Funkadelic functions (therefore, also constructors) have a maximum arity of one
 -- There a CDef can either have a single parameter or no parameters
 data CDef =
-    UnaryConstructor Identifier Type
+        UnaryConstructor Identifier Type
     |   NullaryConstructor Identifier
     deriving (Show, Eq)
 
@@ -38,7 +38,7 @@ data CDef =
 -- tLd∃TopLevelDefinition :: name “= func(” name “:” Type “):”Type”{” exp “}” | “data” name “=” uDtDef
 -- Either a function definition or a data definition
 data Tld = 
-    FuncDefUnary Identifier Identifier Type Exp Type 
+        FuncDefUnary Identifier Identifier Type Exp Type 
     |   FuncDefNullary Identifier Exp Type
     |   DataDef Identifier [CDef]
     deriving (Show, Eq)
@@ -47,7 +47,7 @@ data Tld =
 -- ie∃IExpression ::= ie1 ⊗ ie2 | name | num+
 -- Create a type for all possible expressions
 data IExp = 
-    IExpInt Integer 
+        IExpInt Integer 
     |   IExpVar Identifier 
     |   IExp IExp IBinOp IExp 
     deriving (Show, Eq)
@@ -55,7 +55,8 @@ data IExp =
 -- Expression type
 -- exp∃Expression ::= x | i | s | ie | \(exp){exp}:τ | name(exp)
 data Exp = 
-    ExpVariable Identifier 
+        ExpVariable Identifier
+    |   ExpLet Identifier Exp Type Exp 
     |   ExpInteger Integer
     |   ExpString String
     |   ExpIExp IExp
@@ -77,10 +78,24 @@ cDefParser =
     try unaryCDef 
     <|> nullaryCDef
 
+-- parser for let expressions
+let' :: Parser Exp
+let' = do
+    _ <- string "let"
+    name <- identifier
+    value <- expParser
+    _ <- char ':'
+    t <- Type <$> identifier
+    _ <- char '='
+    _ <- string "in"
+    exp <- expParser
+    return $ ExpLet name value t exp
+
 -- Parser for an expression
 expParser :: Parser Exp
 expParser = 
     try unaryFOCall
+    <|> try let'
     <|> try nullaryFOCall
     <|> try lambda
     <|> ExpIExp <$> (try iExpTerm)
@@ -89,7 +104,7 @@ expParser =
 -- Basic units of an expression
 expAtom :: Parser Exp
 expAtom =   
-    ExpVariable <$> identifier
+        ExpVariable <$> identifier
     <|> ExpInteger <$> integer
     <|> ExpString  <$> string'
 
@@ -112,7 +127,7 @@ iExpTerm =  do
 -- If a case does not pass, tries the next case
 iBinOp :: Parser IBinOp
 iBinOp =    
-    (char '+' >> return Plus)
+        (char '+' >> return Plus)
     <|> (char '-' >> return Minus)
     <|> (char '*' >> return Mult)
     <|> (char '/' >> return Div)
@@ -220,6 +235,10 @@ identifier = do
     first <- count 1 letter -- run count 1 letter and bind it to first
     rest <- many alphaNum
     return $ Identifier (first ++ rest)
+
+-- generates a parser for an arbirtrary type
+type' :: Parser Type
+type' = Type <$> identifier
 
 -- Ensures an integer is composed of digits 0-9
 -- numNumeric ::= “0” | “1” | “2” | “3” | “4” | “5” | “6” | “7” | “8” | “9”
