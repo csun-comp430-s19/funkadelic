@@ -22,4 +22,6 @@ instance Typecheck IExp where
 instance Typecheck Exp where
     typecheck (ExpInteger a) = Just $ Type $ Identifier "Int"
     typecheck (ExpString a) = Just $ Type $ Identifier "String"
-    typecheck (ExpIExp a) = Just $ Type $ Identifier "Int"
+    typecheck (ExpIExp a) 
+        | typecheck a == Just (Type $ Identifier "Int") = Just $ Type $ Identifier "Int"
+        | otherwise = Nothing
