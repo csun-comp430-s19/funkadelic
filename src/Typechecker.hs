@@ -19,5 +19,7 @@ class Typecheck a where
 instance Typecheck IExp where
     typecheck iExp = Just $ Type $ Identifier "Int"
 
-
-
+instance Typecheck Exp where
+    typecheck (ExpInteger a) = Just $ Type $ Identifier "Int"
+    typecheck (ExpString a) = Just $ Type $ Identifier "String"
+    typecheck (ExpIExp a) = Just $ Type $ Identifier "Int"
