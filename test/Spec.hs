@@ -9,6 +9,11 @@ main = hspec spec
 type' :: String -> Type
 type' s = Type $ Identifier s
 
+getRight :: Either a b -> Maybe b
+getRight y = do 
+    Right x <- return y
+    return x
+
 parseIExp input = parse' iExpParser input
 parseExp input = parse' expParser input
 parseTld input = parse' tldParser input
@@ -49,16 +54,13 @@ spec = do
             parseTld "funk=func():string{x*y}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExpVar (Identifier "y")))) (Type (Identifier "string"))))
             parseTld "funk=func():string{x*y+x==5}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string"))))
     
-
     describe "Typechecking Integer Expressions" $ do
         it "typechecks integer expressions" $ do
-            typecheck (IExp (IExpInt 1) Plus (IExpInt 1)) `shouldBe` (Just $ type' "Int")
-            typecheck (IExpInt 1) `shouldBe` (Just $ type' "Int")
-
+            typecheck (getRight (parseIExp "1+1")) `shouldBe` (Just $ type' "Int")
+            typecheck (getRight (parseIExp "1")) `shouldBe` (Just $ type' "Int")
 
     describe "Typechecking Expressions" $ do
         it "typechecks Expressions" $ do
-            typecheck (ExpInteger 1234) `shouldBe` (Just $ type' "Int")
-            typecheck (ExpString "xyz") `shouldBe` (Just $ type' "String")
-            typecheck (ExpIExp (IExpInt 1)) `shouldBe` (Just $ type' "Int")
-            typecheck (ExpIExp (IExp (IExpInt 1) Plus (IExpInt 1))) `shouldBe` (Just $ type' "Int")
+            typecheck (getRight (parseExp "1234")) `shouldBe` (Just $ type' "Int")
+            typecheck (getRight (parseExp "\"xyz\"")) `shouldBe` (Just $ type' "String")
+            typecheck (getRight (parseExp "1+1")) `shouldBe` (Just $ type' "Int")
