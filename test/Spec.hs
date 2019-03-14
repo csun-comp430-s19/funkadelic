@@ -27,6 +27,7 @@ spec = do
             parseIExp "2^y*3-4" `shouldBe` (Right (IExp (IExpInt 2) Exponent (IExp (IExpVar $ Identifier "y") Mult (IExp (IExpInt 3) Minus (IExpInt 4)))))
             parseIExp "2*x+y" `shouldBe` (Right (IExp (IExpInt 2) Mult (IExp (IExpVar $ Identifier "x") Plus (IExpVar $ Identifier "y"))))
             parseIExp "x*y==z" `shouldBe` (Right (IExp (IExpVar $ Identifier "x") Mult (IExp (IExpVar $ Identifier "y") Equals (IExpVar $ Identifier "z"))))
+            -- parseIExp "2*_" `shouldBe` (Left (ParseError (Message "failed") (SourcePos (SourceName "") (Line 1) (Column 1))))
 
     describe "expressions" $ do
         it "parses expressions" $ do
