@@ -24,10 +24,10 @@ instance Typecheck Exp where
     typecheck (ExpString es) = Just $ Type $ Identifier "String"
     typecheck (ExpIExp eie) 
         | typecheck eie == Just (Type $ Identifier "Int") = Just $ Type $ Identifier "Int"
-        | otherwise = nothing
+        | otherwise = Nothing
     typecheck (ExpLambda e1 t1 e2 t2)
-        | paramTypeStatus && returnTypeStatus = Just $ Type $ Identifier t2
-        | otherwise = nothing
+        | paramTypeStatus && returnTypeStatus = Just t2
+        | otherwise = Nothing
         where 
-            paramTypeStatus = typecheck e1 == Just (Type $ Identifier t1)
-            returnTypeStatus = typecheck e2 == Just (Type $ Identifier t2)
+            paramTypeStatus = typecheck e1 == Just t1
+            returnTypeStatus = typecheck e2 == Just t2

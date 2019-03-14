@@ -66,7 +66,10 @@ spec = do
             typecheck (ExpString "xyz") `shouldBe` (Just $ type' "String")
             typecheck (ExpIExp (IExpInt 1)) `shouldBe` (Just $ type' "Int")
             typecheck (ExpIExp (IExp (IExpInt 1) Plus (IExpInt 1))) `shouldBe` (Just $ type' "Int")
-
+            typecheck (ExpLambda (ExpInteger 1234) (type' "Int") (ExpInteger 1234) (type' "Int")) `shouldBe` (Just $ type' "Int")
+            typecheck (ExpLambda (ExpString "1234") (type' "String") (ExpInteger 1234) (type' "Int")) `shouldBe` (Just $ type' "Int")
+            typecheck (ExpLambda (ExpInteger 1234) (type' "Int") (ExpString "1234") (type' "String")) `shouldBe` (Just $ type' "String")
+            
     -- describe "integration integer expressions" $ do
     --     it "tests integration of typecheck IExpressions and parsing IExpressions" $ do
     --         typecheck (getRight (parseIExp "1+1")) `shouldBe` (Just $ type' "Int")
