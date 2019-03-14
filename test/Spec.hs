@@ -34,7 +34,7 @@ spec = do
             parseExp "x23232" `shouldBe` (Right $ ExpVariable $ Identifier "x23232")
             parseExp "12323232" `shouldBe` (Right $ ExpInteger 12323232)
             parseExp "\"xyz\"" `shouldBe` (Right $ ExpString "xyz")
-            parseExp "\\(x){x}:String" `shouldBe` (Right (ExpLambda (ExpVariable $ Identifier "x") (ExpVariable $ Identifier "x") (Type $ Identifier "String")))
+            parseExp "\\(x):String{x}:String" `shouldBe` (Right (ExpLambda (ExpVariable $ Identifier "x") (Type $ Identifier "String") (ExpVariable $ Identifier "x") (Type $ Identifier "String")))
             parseExp "x*y" `shouldBe` (Right $ ExpIExp $ IExp (IExpVar $ Identifier "x") Mult (IExpVar $ Identifier "y"))
             parseExp "name(x)" `shouldBe` (Right (ExpUnaryFOCall (Identifier "name") (ExpVariable $ Identifier "x")))
             parseExp "name()" `shouldBe` (Right (ExpNullaryFOCall (Identifier "name")))

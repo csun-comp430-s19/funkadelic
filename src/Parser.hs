@@ -60,7 +60,7 @@ data Exp =
     |   ExpInteger Integer
     |   ExpString String
     |   ExpIExp IExp
-    |   ExpLambda Exp Exp Type
+    |   ExpLambda Exp Type Exp Type
     |   ExpUnaryFOCall Identifier Exp
     |   ExpNullaryFOCall Identifier
     deriving (Show, Eq)
@@ -202,11 +202,13 @@ lambda :: Parser Exp
 lambda = do
     _ <- string "\\("
     parameter <- ExpVariable <$> identifier
-    _ <- string "){"
+    _ <- string "):"
+    parType <- identifier
+    _ <- string "{"
     body <- expParser
     _ <- string "}:"
     retType <- identifier 
-    return $ ExpLambda parameter body (Type retType)
+    return $ ExpLambda parameter (Type parType) body (Type retType)
 
 -- Extract the function name and parameter (only one)
 -- Lifts the extracted values into the monad ExpUnaryFOCall
