@@ -14,10 +14,11 @@ getType (Gamma g) x = let gMap = fromList g in do
     return t
 
 class Typecheck a where
-    typecheck :: a -> Maybe Type
+    typecheck :: Maybe a -> Maybe Type
 
 instance Typecheck IExp where
-    typecheck iExp = Just $ Type $ Identifier "Int"
+    typecheck (Just iExp) = Just $ Type $ Identifier "Int"
+    typecheck Nothing = Nothing
 
 instance Typecheck Exp where
     typecheck (ExpInteger ei) = Just $ Type $ Identifier "Int"
