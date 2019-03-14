@@ -18,6 +18,7 @@ parseIExp input = parse' iExpParser input
 parseExp input = parse' expParser input
 parseTld input = parse' tldParser input
 
+
 spec = do
     describe "integer expressions" $ do
         it "parses integer expressions" $ do
@@ -32,7 +33,15 @@ spec = do
             parseIExp "2^y*3-4" `shouldBe` (Right (IExp (IExpInt 2) Exponent (IExp (IExpVar $ Identifier "y") Mult (IExp (IExpInt 3) Minus (IExpInt 4)))))
             parseIExp "2*x+y" `shouldBe` (Right (IExp (IExpInt 2) Mult (IExp (IExpVar $ Identifier "x") Plus (IExpVar $ Identifier "y"))))
             parseIExp "x*y==z" `shouldBe` (Right (IExp (IExpVar $ Identifier "x") Mult (IExp (IExpVar $ Identifier "y") Equals (IExpVar $ Identifier "z"))))
-            -- parseIExp "2*_" `shouldBe` (Left (ParseError (Message "failed") (SourcePos (SourceName "") (Line 1) (Column 1))))
+            (getRight $ parseIExp "2*_") `shouldBe` Nothing
+            (getRight $ parseIExp "2*8a") `shouldBe` Nothing
+            (getRight $ parseIExp "3^+2") `shouldBe` Nothing
+            (getRight $ parseIExp "3^") `shouldBe` Nothing
+            (getRight $ parseIExp "x23232 + _2") `shouldBe` Nothing
+            (getRight $ parseIExp "_2+(2)") `shouldBe` Nothing
+            (getRight $ parseIExp "") `shouldBe` Nothing
+            (getRight $ parseIExp "\\(x):String{x}:String") `shouldBe` Nothing
+
 
     describe "expressions" $ do
         it "parses expressions" $ do
@@ -44,6 +53,15 @@ spec = do
             parseExp "x*y" `shouldBe` (Right $ ExpIExp $ IExp (IExpVar $ Identifier "x") Mult (IExpVar $ Identifier "y"))
             parseExp "name(x)" `shouldBe` (Right (ExpUnaryFOCall (Identifier "name") (ExpVariable $ Identifier "x")))
             parseExp "name()" `shouldBe` (Right (ExpNullaryFOCall (Identifier "name")))
+            (getRight $ parseExp "2a") `shouldBe` Nothing
+            (getRight $ parseExp "x23232 + _2") `shouldBe` Nothing
+            (getRight $ parseExp "\"xyz\" + 5") `shouldBe` Nothing
+            (getRight $ parseExp "") `shouldBe` Nothing
+            (getRight $ parseExp "\\(x):String{x}:") `shouldBe` Nothing
+            (getRight $ parseExp "name(x") `shouldBe` Nothing
+            (getRight $ parseExp "name( )") `shouldBe` Nothing
+            (getRight $ parseExp "\"xyz") `shouldBe` Nothing
+
 
     describe "top level function and data definitions" $ do
         it "parses tlds" $ do
@@ -54,7 +72,13 @@ spec = do
             parseTld "funk=func():string{a}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpVariable $ Identifier "a") (Type $ Identifier "string")))
             parseTld "funk=func():string{x*y}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExpVar (Identifier "y")))) (Type (Identifier "string"))))
             parseTld "funk=func():string{x*y+x==5}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string"))))
+            (getRight $ parseTld "datanewType=Nullary(") `shouldBe` Nothing
+            (getRight $ parseTld "datanewType=Calculate") `shouldBe` Nothing
+            (getRight $ parseTld "funk=func():string{}") `shouldBe` Nothing
+            (getRight $ parseTld "funk=func():{}") `shouldBe` Nothing
+            (getRight $ parseTld "funk=func():string{x*_}") `shouldBe` Nothing
     
+
     describe "typechecking integer expressions" $ do
         it "typechecks integer expressions" $ do
             typecheck (IExp (IExpInt 1) Plus (IExpInt 1)) `shouldBe` (Just $ type' "Int")
@@ -70,11 +94,13 @@ spec = do
             typecheck (ExpLambda (ExpInteger 1234) (type' "Int") (ExpInteger 1234) (type' "Int")) `shouldBe` (Just $ type' "Int")
             typecheck (ExpLambda (ExpString "1234") (type' "String") (ExpInteger 1234) (type' "Int")) `shouldBe` (Just $ type' "Int")
             typecheck (ExpLambda (ExpInteger 1234) (type' "Int") (ExpString "1234") (type' "String")) `shouldBe` (Just $ type' "String")
-            
+           
+
     -- describe "integration integer expressions" $ do
     --     it "tests integration of typecheck IExpressions and parsing IExpressions" $ do
     --         typecheck (getRight (parseIExp "1+1")) `shouldBe` (Just $ type' "Int")
     --         typecheck (getRight (parseIExp "1")) `shouldBe` (Just $ type' "Int")
+
 
     -- describe "typechecking expressions" $ do
     --     it "tests integration of typecheck expressions and parsing expressions" $ do
