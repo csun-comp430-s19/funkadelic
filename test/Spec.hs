@@ -54,13 +54,26 @@ spec = do
             parseTld "funk=func():string{x*y}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExpVar (Identifier "y")))) (Type (Identifier "string"))))
             parseTld "funk=func():string{x*y+x==5}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string"))))
     
-    describe "Typechecking Integer Expressions" $ do
+    describe "typechecking integer expressions" $ do
         it "typechecks integer expressions" $ do
-            typecheck (getRight (parseIExp "1+1")) `shouldBe` (Just $ type' "Int")
-            typecheck (getRight (parseIExp "1")) `shouldBe` (Just $ type' "Int")
+            typecheck (IExp (IExpInt 1) Plus (IExpInt 1)) `shouldBe` (Just $ type' "Int")
+            typecheck (IExpInt 1) `shouldBe` (Just $ type' "Int")
 
-    describe "Typechecking Expressions" $ do
+
+    describe "typechecking expressions" $ do
         it "typechecks Expressions" $ do
-            typecheck (getRight (parseExp "1234")) `shouldBe` (Just $ type' "Int")
-            typecheck (getRight (parseExp "\"xyz\"")) `shouldBe` (Just $ type' "String")
-            typecheck (getRight (parseExp "1+1")) `shouldBe` (Just $ type' "Int")
+            typecheck (ExpInteger 1234) `shouldBe` (Just $ type' "Int")
+            typecheck (ExpString "xyz") `shouldBe` (Just $ type' "String")
+            typecheck (ExpIExp (IExpInt 1)) `shouldBe` (Just $ type' "Int")
+            typecheck (ExpIExp (IExp (IExpInt 1) Plus (IExpInt 1))) `shouldBe` (Just $ type' "Int")
+
+    -- describe "integration integer expressions" $ do
+    --     it "tests integration of typecheck IExpressions and parsing IExpressions" $ do
+    --         typecheck (getRight (parseIExp "1+1")) `shouldBe` (Just $ type' "Int")
+    --         typecheck (getRight (parseIExp "1")) `shouldBe` (Just $ type' "Int")
+
+    -- describe "typechecking expressions" $ do
+    --     it "tests integration of typecheck expressions and parsing expressions" $ do
+    --         typecheck (getRight (parseExp "1234")) `shouldBe` (Just $ type' "Int")
+    --         typecheck (getRight (parseExp "\"xyz\"")) `shouldBe` (Just $ type' "String")
+    --         typecheck (getRight (parseExp "1+1")) `shouldBe` (Just $ type' "Int")
