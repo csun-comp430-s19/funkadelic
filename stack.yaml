@@ -1,5 +1,7 @@
 flags: {}
+allow-newer: true
 packages:
 - .
-extra-deps: []
+extra-deps:
+  - hspec-expectations-match-0.2.0.0
 resolver: lts-13.6

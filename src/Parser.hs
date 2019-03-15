@@ -13,7 +13,10 @@ import Text.ParserCombinators.Parsec
 -- Explicitly create type (type in haskell) called Type (type in our Funkadelic)
 -- which derives the typeclasses show and eq
 -- Takes in an Identifier in its constructor
-newtype Type = Type Identifier deriving (Show, Eq)
+data Type = 
+        Type Identifier 
+    |   FunctionType Type Type
+    deriving (Show, Eq)
 
 -- Create type called Identifier
 -- Constructor takes in a string (Token)
@@ -245,6 +248,10 @@ identifier = do
 -- generates a parser for an arbirtrary type
 type' :: Parser Type
 type' = Type <$> identifier
+
+-- shortcut for constructing a type
+mkType :: String -> Type 
+mkType t = Type $ Identifier t
 
 -- Ensures an integer is composed of digits 0-9
 -- numNumeric ::= “0” | “1” | “2” | “3” | “4” | “5” | “6” | “7” | “8” | “9”
