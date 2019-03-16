@@ -34,7 +34,6 @@ instance Typecheck Tld where
                 where
                     functionType = FunctionType inType  outType
             False -> return Nothing
-    
     typecheck (FuncDefNullary fName body t) = do
         actualType <- typecheck body
         case actualType == Just t of
@@ -67,6 +66,25 @@ instance Typecheck Exp where
         case e1t == (Just t1) && e2t == (Just t2) of
             True -> return (Just t1)
             False -> return Nothing
+    typecheck (ExpUnaryFOCall fName param) = do
+        actualType <- typecheck param
+        gamma <- get
+        case getType fName gamma of
+            Just (FunctionType inType outType) -> do
+                case typesMatch of
+                    True -> return (Just outType)
+                    False -> return Nothing
+                where
+                    typesMatch = (Just inType) == actualType
+            otherwise -> return Nothing
+    typecheck (ExpNullaryFOCall fName) = do
+        gamma <- get
+        case getType fName gamma of
+            Just t -> return (Just t)
+            Nothing -> return Nothing
+
+
+    
 
 main = runState (typecheck x) gamma
             where 
