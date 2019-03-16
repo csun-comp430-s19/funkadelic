@@ -23,6 +23,8 @@ dependencies:
 - base >= 4.7 && < 5
 - parsec >=3.1
 - containers >= 0.4.0.0
+- mtl >= 2.2.2
+- transformers >= 0.5.5.0
 
 library:
   source-dirs: src
@@ -49,3 +51,5 @@ tests:
     dependencies:
     - Funkadelic
     - hspec >= 2.6.0
+    - template-haskell >= 2.11.0.0
+    - hspec-expectations-match >= 0.2.0.0
