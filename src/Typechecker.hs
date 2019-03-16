@@ -67,7 +67,7 @@ instance Typecheck Exp where
         e1t <- typecheck e1
         e2t <- typecheck e2
         case e1t == (Just t1) && e2t == (Just t2) of
-            True -> return (Just t1)
+            True -> return (Just t2)
             False -> return Nothing
     typecheck (ExpUnaryFOCall fName param) = do
         actualType <- typecheck param
