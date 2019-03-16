@@ -2,6 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 import Language.Haskell.TH.Lib.Internal
 import Test.Hspec.Expectations.Match
+import Control.Monad.State.Lazy
 import Parser hiding (type')
 import Typechecker hiding (main)
 import Test.Hspec
@@ -16,6 +17,9 @@ getRight :: Either a b -> Maybe b
 getRight y = do 
     Right x <- return y
     return x
+
+intType = (Just $ type' "Int")
+stringType = (Just $ type' "String")
 
 parseIExp input = parse' iExpParser input
 parseExp input = parse' expParser input
@@ -58,25 +62,31 @@ spec = do
             parseTld "funk=func():string{x*y}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExpVar (Identifier "y")))) (Type (Identifier "string"))))
             parseTld "funk=func():string{x*y+x==5}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string"))))
     
-    -- describe "typechecking integer expressions" $ do
-        -- it "typechecks integer expressions" $ do
-            -- typecheck (IExp (IExpInt 1) Plus (IExpInt 1)) `shouldReturn` (Just $ type' "Int")
-            -- $(assertDo [|do
-            --     t1 <- typecheck (IExp (IExpInt 1) Plus (IExpInt 1))
-            --     return $ t1 `shouldBe` (Just $ type' "Int")|])
-            -- typecheck (IExpInt 1) `shouldBe` return (Just $ type' "Int")
+
+    describe "typechecking integer expressions" $ do
+        it "typechecks integer expressions" $ do
+            let typeEnv = (Gamma [(Identifier "x", mkType "Int")])
+            (evalState (typecheck (IExpVar (Identifier "x"))) typeEnv) `shouldBe` intType
+            let typeEnv = (Gamma [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "z", mkType "Int")])
+            (evalState (typecheck (IExpVar (Identifier "y"))) typeEnv) `shouldBe` stringType
+            (evalState (typecheck (IExp (IExpInt 1) Plus (IExpInt 1))) typeEnv) `shouldBe` intType
+            (evalState (typecheck (IExpInt 1)) typeEnv) `shouldBe` intType
 
 
-    -- describe "typechecking expressions" $ do
-    --     it "typechecks Expressions" $ do
-            -- typecheck (ExpInteger 1234) `shouldBe` return (Just $ type' "Int")
-            -- typecheck (ExpString "xyz") `shouldBe` (Just $ type' "String")
-            -- typecheck (ExpIExp (IExpInt 1)) `shouldBe` (Just $ type' "Int")
-            -- typecheck (ExpIExp (IExp (IExpInt 1) Plus (IExpInt 1))) `shouldBe` (Just $ type' "Int")
-            -- typecheck (ExpLambda (ExpInteger 1234) (type' "Int") (ExpInteger 1234) (type' "Int")) `shouldBe` (Just $ type' "Int")
-            -- typecheck (ExpLambda (ExpString "1234") (type' "String") (ExpInteger 1234) (type' "Int")) `shouldBe` (Just $ type' "Int")
-            -- typecheck (ExpLambda (ExpInteger 1234) (type' "Int") (ExpString "1234") (type' "String")) `shouldBe` (Just $ type' "String")
-            
+    describe "typechecking expressions" $ do
+        it "typechecks Expressions" $ do
+            let typeEnv = (Gamma [(Identifier "x", mkType "Int")])
+            (evalState (typecheck (ExpInteger 1234)) typeEnv) `shouldBe` intType
+            (evalState (typecheck (ExpString "xyz")) typeEnv) `shouldBe` stringType
+            let typeEnv = (Gamma [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "z", mkType "Int")])
+            (evalState (typecheck (ExpIExp (IExpVar (Identifier "y")))) typeEnv) `shouldBe` stringType
+            (evalState (typecheck (ExpIExp (IExpVar (Identifier "z")))) typeEnv) `shouldBe` intType
+            (evalState (typecheck (ExpIExp (IExpInt 1))) typeEnv) `shouldBe` intType
+            (evalState (typecheck (ExpIExp (IExp (IExpInt 1) Plus (IExpInt 1)))) typeEnv) `shouldBe` intType
+            (evalState (typecheck (ExpLambda (ExpInteger 1234) (type' "Int") (ExpInteger 1234) (type' "Int"))) typeEnv) `shouldBe` intType
+            (evalState (typecheck (ExpLambda (ExpString "1234") (type' "String") (ExpInteger 1234) (type' "Int"))) typeEnv) `shouldBe` stringType
+            (evalState (typecheck (ExpLambda (ExpInteger 1234) (type' "Int") (ExpString "1234") (type' "String"))) typeEnv) `shouldBe` intType
+
     -- describe "integration integer expressions" $ do
     --     it "tests integration of typecheck IExpressions and parsing IExpressions" $ do
     --         typecheck (getRight (parseIExp "1+1")) `shouldBe` (Just $ type' "Int")
