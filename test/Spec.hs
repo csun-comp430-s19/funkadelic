@@ -7,5 +7,6 @@ main :: IO ()
 main = hspec spec
 
 spec = do
-    pSpec 
-    tcSpec
+    pSpec -- Parser tests
+    tcSpec -- Typechecker tests
+    -- iSpec -- Integration tests
