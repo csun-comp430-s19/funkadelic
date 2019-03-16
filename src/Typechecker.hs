@@ -85,11 +85,3 @@ instance Typecheck Exp where
         case getType fName gamma of
             Just t -> return (Just t)
             Nothing -> return Nothing
-
-
-    
-
-main = runState (typecheck x) gamma
-            where 
-                x = IExpVar (Identifier "var")
-                gamma = Gamma [(Identifier "var", mkType "string")]
