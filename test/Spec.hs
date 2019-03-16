@@ -2,6 +2,7 @@
 import Test.Hspec
 import ParserSpec
 import TypecheckerSpec
+import IntegrationSpec
 
 main :: IO ()
 main = hspec spec
