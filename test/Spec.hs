@@ -87,6 +87,12 @@ spec = do
             (evalState (typecheck (ExpLambda (ExpString "1234") (type' "String") (ExpInteger 1234) (type' "Int"))) typeEnv) `shouldBe` stringType
             (evalState (typecheck (ExpLambda (ExpInteger 1234) (type' "Int") (ExpString "1234") (type' "String"))) typeEnv) `shouldBe` intType
 
+    describe "typechecking tlds" $ do
+        it "typechecks top level definitions" $ do
+            let typeEnv = (Gamma [(Identifier "x", mkType "Int")])
+            --let typeEnv = (Gamma [(Identifier "funk", mkType "String")])
+            --(evalState (typecheck (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "String") (ExpVariable $ Identifier "a") (Type $ Identifier "String"))) typeEnv) `shouldBe` stringType
+            
     -- describe "integration integer expressions" $ do
     --     it "tests integration of typecheck IExpressions and parsing IExpressions" $ do
     --         typecheck (getRight (parseIExp "1+1")) `shouldBe` (Just $ type' "Int")
