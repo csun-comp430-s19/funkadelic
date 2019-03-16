@@ -15,7 +15,7 @@ addEntry :: Identifier -> Type -> Gamma -> Gamma
 addEntry n t (Gamma l) = Gamma (l ++ [(n,t)])
 
 getType :: Identifier -> Gamma -> Maybe Type
-getType x (Gamma g) = let gMap = fromList g in do
+getType x (Gamma l) = let gMap = fromList l in do
     t <- lookup x gMap
     return t
 
