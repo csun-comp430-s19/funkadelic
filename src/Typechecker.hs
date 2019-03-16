@@ -26,11 +26,12 @@ class Typecheck a where
 
 
 instance Typecheck Tld where
-    typecheck (FuncDefUnary fName cName inType body outType) = do
+    typecheck (FuncDefUnary fName var inType body outType) = do
+        gamma <- get
+        _ <- put $ addEntry var inType gamma
         actualOutType <- typecheck body
         case actualOutType == Just outType of
             True -> do
-                gamma <- get
                 _ <- put $ addEntry fName functionType gamma
                 return (Just functionType)
                 where

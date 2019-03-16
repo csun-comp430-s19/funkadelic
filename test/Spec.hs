@@ -89,9 +89,9 @@ spec = do
 
     describe "typechecking tlds" $ do
         it "typechecks top level definitions" $ do
-            let typeEnv = (Gamma [(Identifier "x", mkType "Int")])
-            --let typeEnv = (Gamma [(Identifier "funk", mkType "String")])
-            --(evalState (typecheck (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "String") (ExpVariable $ Identifier "a") (Type $ Identifier "String"))) typeEnv) `shouldBe` stringType
+            -- let typeEnv = (Gamma [(Identifier "x", mkType "Int")])
+            let typeEnv = (Gamma [(Identifier "funk", mkType "String")])
+            (evalState (typecheck (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "String") (ExpVariable $ Identifier "a") (Type $ Identifier "String"))) typeEnv) `shouldBe` stringType
             
     -- describe "integration integer expressions" $ do
     --     it "tests integration of typecheck IExpressions and parsing IExpressions" $ do
