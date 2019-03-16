@@ -13,7 +13,10 @@ import Text.ParserCombinators.Parsec
 -- Explicitly create type (type in haskell) called Type (type in our Funkadelic)
 -- which derives the typeclasses show and eq
 -- Takes in an Identifier in its constructor
-newtype Type = Type Identifier deriving (Show, Eq)
+data Type = 
+        Type Identifier 
+    |   FunctionType Type Type
+    deriving (Show, Eq)
 
 -- Create type called Identifier
 -- Constructor takes in a string (Token)
@@ -57,7 +60,7 @@ data IExp =
 -- exp∃Expression ::= x | i | s | ie | \(exp){exp}:τ | name(exp)
 data Exp = 
         ExpVariable Identifier
-    |   ExpLet Identifier Exp Type Exp 
+    -- |   ExpLet Identifier Exp Type Exp 
     |   ExpInteger Integer
     |   ExpString String
     |   ExpIExp IExp
@@ -80,23 +83,23 @@ cDefParser =
     <|> nullaryCDef
 
 -- parser for let expressions
-let' :: Parser Exp
-let' = do
-    _ <- string "let"
-    name <- identifier
-    value <- expParser
-    _ <- char ':'
-    t <- Type <$> identifier
-    _ <- char '='
-    _ <- string "in"
-    exp <- expParser
-    return $ ExpLet name value t exp
+-- let' :: Parser Exp
+-- let' = do
+--     _ <- string "let"
+--     name <- identifier
+--     value <- expParser
+--     _ <- char ':'
+--     t <- Type <$> identifier
+--     _ <- char '='
+--     _ <- string "in"
+--     exp <- expParser
+--     return $ ExpLet name value t exp
 
 -- Parser for an expression
 expParser :: Parser Exp
 expParser = 
     try unaryFOCall
-    <|> try let'
+    -- <|> try let'
     <|> try nullaryFOCall
     <|> try lambda
     <|> ExpIExp <$> (try iExpTerm)
@@ -245,6 +248,13 @@ identifier = do
 -- generates a parser for an arbirtrary type
 type' :: Parser Type
 type' = Type <$> identifier
+
+-- shortcut for constructing a type
+mkType :: String -> Type 
+mkType t = Type $ Identifier t
+
+mkFuncType :: String -> String -> Type
+mkFuncType p r = (FunctionType (Type $ Identifier p) (Type $ Identifier r))
 
 -- Ensures an integer is composed of digits 0-9
 -- numNumeric ::= “0” | “1” | “2” | “3” | “4” | “5” | “6” | “7” | “8” | “9”

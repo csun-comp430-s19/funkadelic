@@ -1,33 +1,87 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Typechecker where
 
+import Control.Monad.State.Lazy
+import Control.Monad.Trans.Class
+import Control.Monad.Trans.Maybe
 import Prelude hiding (lookup)
 import Parser
 import Data.Map
 
 -- Type environment
-data Gamma = Gamma [(Identifier, Type)]
+data Gamma = Gamma [(Identifier, Type)] deriving (Show)
 
-getType :: Gamma -> Identifier -> Maybe Type
-getType (Gamma g) x = let gMap = fromList g in do
+addEntry :: Identifier -> Type -> Gamma -> Gamma
+addEntry n t (Gamma l) = Gamma (l ++ [(n,t)])
+
+getType :: Identifier -> Gamma -> Maybe Type
+getType x (Gamma l) = do
     t <- lookup x gMap
     return t
+    where
+        gMap = fromList l
 
 class Typecheck a where
-    typecheck :: a -> Maybe Type
+    typecheck :: a -> State Gamma (Maybe Type)
+
+
+instance Typecheck Tld where
+    typecheck (FuncDefUnary fName var inType body outType) = do
+        gamma <- get
+        _ <- put $ addEntry var inType gamma
+        actualOutType <- typecheck body
+        case actualOutType == Just outType of
+            True -> do
+                _ <- put $ addEntry fName functionType gamma
+                return (Just functionType)
+                where
+                    functionType = FunctionType inType  outType
+            False -> return Nothing
+    typecheck (FuncDefNullary fName body t) = do
+        actualType <- typecheck body
+        case actualType == Just t of
+            True -> do
+                gamma <- get
+                _ <- put $ addEntry fName t gamma
+                return $ Just t
+            False -> return Nothing
+    
+
 
 instance Typecheck IExp where
-    typecheck iExp = Just $ Type $ Identifier "Int"
+    typecheck (IExpVar id) = do
+        gamma <- get
+        case getType id gamma of
+            Just (Type (Identifier t)) -> return (Just $ mkType $ t)
+            Nothing -> return Nothing
+    typecheck iExp = return (Just $ mkType $ "Int")
 
 instance Typecheck Exp where
-    typecheck (ExpInteger ei) = Just $ Type $ Identifier "Int"
-    typecheck (ExpString es) = Just $ Type $ Identifier "String"
-    typecheck (ExpIExp eie) 
-        | typecheck eie == Just (Type $ Identifier "Int") = Just $ Type $ Identifier "Int"
-        | otherwise = Nothing
-    typecheck (ExpLambda e1 t1 e2 t2)
-        | paramTypeStatus && returnTypeStatus = Just t2
-        | otherwise = Nothing
-        where 
-            paramTypeStatus = typecheck e1 == Just t1
-            returnTypeStatus = typecheck e2 == Just t2
+    typecheck (ExpInteger ei) = return $ Just $ mkType "Int"
+    typecheck (ExpString es) = return $ Just $ mkType "String"
+    typecheck (ExpIExp eie) = typecheck eie
+    typecheck (ExpVariable x) = do
+        gamma <- get
+        return $ getType x gamma
+    typecheck (ExpLambda e1 t1 e2 t2) = do
+        e1t <- typecheck e1
+        e2t <- typecheck e2
+        case e1t == (Just t1) && e2t == (Just t2) of
+            True -> return (Just t2)
+            False -> return Nothing
+    typecheck (ExpUnaryFOCall fName param) = do
+        actualType <- typecheck param
+        gamma <- get
+        case getType fName gamma of
+            Just (FunctionType inType outType) -> do
+                case typesMatch of
+                    True -> return (Just outType)
+                    False -> return Nothing
+                where
+                    typesMatch = (Just inType) == actualType
+            otherwise -> return Nothing
+    typecheck (ExpNullaryFOCall fName) = do
+        gamma <- get
+        case getType fName gamma of
+            Just t -> return (Just t)
+            Nothing -> return Nothing
