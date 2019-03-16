@@ -60,7 +60,7 @@ data IExp =
 -- exp∃Expression ::= x | i | s | ie | \(exp){exp}:τ | name(exp)
 data Exp = 
         ExpVariable Identifier
-    |   ExpLet Identifier Exp Type Exp 
+    -- |   ExpLet Identifier Exp Type Exp 
     |   ExpInteger Integer
     |   ExpString String
     |   ExpIExp IExp
@@ -83,23 +83,23 @@ cDefParser =
     <|> nullaryCDef
 
 -- parser for let expressions
-let' :: Parser Exp
-let' = do
-    _ <- string "let"
-    name <- identifier
-    value <- expParser
-    _ <- char ':'
-    t <- Type <$> identifier
-    _ <- char '='
-    _ <- string "in"
-    exp <- expParser
-    return $ ExpLet name value t exp
+-- let' :: Parser Exp
+-- let' = do
+--     _ <- string "let"
+--     name <- identifier
+--     value <- expParser
+--     _ <- char ':'
+--     t <- Type <$> identifier
+--     _ <- char '='
+--     _ <- string "in"
+--     exp <- expParser
+--     return $ ExpLet name value t exp
 
 -- Parser for an expression
 expParser :: Parser Exp
 expParser = 
     try unaryFOCall
-    <|> try let'
+    -- <|> try let'
     <|> try nullaryFOCall
     <|> try lambda
     <|> ExpIExp <$> (try iExpTerm)
