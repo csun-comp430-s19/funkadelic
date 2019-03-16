@@ -52,6 +52,7 @@ spec = do
             parseExp "name(x)" `shouldBe` (Right (ExpUnaryFOCall (Identifier "name") (ExpVariable $ Identifier "x")))
             parseExp "name()" `shouldBe` (Right (ExpNullaryFOCall (Identifier "name")))
 
+
     describe "top level function and data definitions" $ do
         it "parses tlds" $ do
             parseTld "datanewType=Nullary()" `shouldBe` (Right (DataDef (Identifier "newType") [NullaryConstructor $ Identifier "Nullary"]))
@@ -86,20 +87,34 @@ spec = do
             (evalState (typecheck (ExpLambda (ExpInteger 1234) (type' "Int") (ExpInteger 1234) (type' "Int"))) typeEnv) `shouldBe` intType
             (evalState (typecheck (ExpLambda (ExpString "1234") (type' "String") (ExpInteger 1234) (type' "Int"))) typeEnv) `shouldBe` intType
             (evalState (typecheck (ExpLambda (ExpInteger 1234) (type' "Int") (ExpString "1234") (type' "String"))) typeEnv) `shouldBe` stringType
+            let typeEnv = (Gamma [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "name", (mkFuncType "Int" "String"))])
+            (evalState (typecheck (ExpUnaryFOCall (Identifier "name") (ExpVariable $ Identifier "x"))) typeEnv) `shouldBe` stringType
+            let typeEnv = (Gamma [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "name", mkType "Int")])
+            (evalState (typecheck (ExpNullaryFOCall (Identifier "name"))) typeEnv) `shouldBe` intType
+
 
     describe "typechecking tlds" $ do
         it "typechecks top level definitions" $ do
-            -- let typeEnv = (Gamma [(Identifier "x", mkType "Int")])
             let typeEnv = (Gamma [(Identifier "funk", mkType "String")])
-            (evalState (typecheck (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "String") (ExpVariable $ Identifier "a") (Type $ Identifier "String"))) typeEnv) `shouldBe` stringType
-            
-    -- describe "integration integer expressions" $ do
-    --     it "tests integration of typecheck IExpressions and parsing IExpressions" $ do
-    --         typecheck (getRight (parseIExp "1+1")) `shouldBe` (Just $ type' "Int")
-    --         typecheck (getRight (parseIExp "1")) `shouldBe` (Just $ type' "Int")
+            (evalState (typecheck (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "String") (ExpVariable $ Identifier "a") (Type $ Identifier "String"))) typeEnv) 
+                `shouldBe` Just (FunctionType (Type (Identifier "String")) (Type (Identifier "String")))
 
-    -- describe "typechecking expressions" $ do
-    --     it "tests integration of typecheck expressions and parsing expressions" $ do
-    --         typecheck (getRight (parseExp "1234")) `shouldBe` (Just $ type' "Int")
-    --         typecheck (getRight (parseExp "\"xyz\"")) `shouldBe` (Just $ type' "String")
-    --         typecheck (getRight (parseExp "1+1")) `shouldBe` (Just $ type' "Int")
+            let typeEnv = (Gamma [(Identifier "anotherFunk", mkType "String")])
+            (evalState (typecheck (FuncDefNullary (Identifier "anotherFunk") (ExpInteger 1234) (Type $ Identifier "Int"))) typeEnv)
+                `shouldBe` Just (Type (Identifier "Int"))
+
+            let typeEnv = (Gamma [(Identifier "anotherFunk", mkType "String")])
+            (evalState (typecheck (FuncDefNullary (Identifier "anotherFunk") (ExpInteger 1234) (Type $ Identifier "String"))) typeEnv) 
+                `shouldBe` Nothing
+
+            let typeEnv = (Gamma [(Identifier "anotherFunk", mkType "String")])
+            (evalState (typecheck (FuncDefNullary (Identifier "anotherFunk") (ExpVariable $ Identifier "a") (Type $ Identifier "String"))) typeEnv) 
+                `shouldBe` Nothing
+
+            let typeEnv = (Gamma [(Identifier "anotherFunk", mkType "String")])
+            (evalState (typecheck (FuncDefNullary (Identifier "anotherFunk") (ExpVariable $ Identifier "a") (Type $ Identifier "String"))) typeEnv) 
+                `shouldBe` Nothing
+
+            let typeEnv = (Gamma [(Identifier "function", mkType "String")])
+            (evalState (typecheck (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string")))) typeEnv)
+                `shouldBe` Nothing
