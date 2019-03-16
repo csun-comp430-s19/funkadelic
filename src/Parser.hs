@@ -253,6 +253,9 @@ type' = Type <$> identifier
 mkType :: String -> Type 
 mkType t = Type $ Identifier t
 
+mkFuncType :: String -> String -> Type
+mkFuncType p r = (FunctionType (Type $ Identifier p) (Type $ Identifier r))
+
 -- Ensures an integer is composed of digits 0-9
 -- numNumeric ::= “0” | “1” | “2” | “3” | “4” | “5” | “6” | “7” | “8” | “9”
 integer :: Parser Integer
