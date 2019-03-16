@@ -74,7 +74,7 @@ pSpec = do
             parseTld "funk=func():string{a}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpVariable $ Identifier "a") (Type $ Identifier "string")))
             parseTld "funk=func():string{x*y}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExpVar (Identifier "y")))) (Type (Identifier "string"))))
             parseTld "funk=func():string{x*y+x==5}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string"))))
-            
+    
         it "does not parse invalid tlds/data definitions" $ do
             (getRight $ parseTld "datanewType=Nullary(") `shouldBe` Nothing
             (getRight $ parseTld "datanewType=Calculate") `shouldBe` Nothing
