@@ -1,11 +1,10 @@
 {-# LANGUAGE FlexibleContexts #-}
-module ParserSpec where
-
 import Parser hiding (type')
+import Types
 import Test.Hspec
 
-parserSpec :: IO ()
-parserSpec = hspec pSpec
+main :: IO ()
+main = hspec spec
 
 getRight :: Either a b -> Maybe b
 getRight y = do 
@@ -17,7 +16,7 @@ parseExp input = parse' expParser input
 parseTld input = parse' tldParser input
 
 
-pSpec = do
+spec = do
     describe "integer expressions" $ do
         it "parses integer expressions" $ do
             parseIExp "1+1" `shouldBe` (Right $ IExp (IExpInt 1) Plus (IExpInt 1))

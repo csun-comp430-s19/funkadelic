@@ -1,6 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
-module TypecheckerSpec where
-import Parser hiding (type')
+import Types
 import Typechecker
 import Test.Hspec
 import Control.Monad.State.Lazy
@@ -10,13 +9,13 @@ type' :: String -> Type
 type' s = Type $ Identifier s
 
 
-typecheckerSpec :: IO ()
-typecheckerSpec = hspec tcSpec
+main :: IO ()
+main = hspec spec
 
 intType = (Just $ type' "Int")
 stringType = (Just $ type' "String")
 
-tcSpec = do
+spec = do
     describe "typechecking integer expressions" $ do
         it "typechecks integer expressions" $ do
             let typeEnv = (Gamma [(Identifier "x", mkType "Int")])
