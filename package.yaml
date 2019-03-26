@@ -41,8 +41,8 @@ executables:
     - Funkadelic
 
 tests:
-  
-  Funkadelic-Typechecker-Test:
+
+  Typechecker-Test:
     main:                Spec.hs
     source-dirs:         test/Typechecker
     ghc-options:
@@ -55,7 +55,7 @@ tests:
     - template-haskell >= 2.11.0.0
     - hspec-expectations-match >= 0.2.0.0
 
-  Funkadelic-Parser-Test:
+  Parser-Test:
     main:                Spec.hs
     source-dirs:         test/Parser
     ghc-options:
