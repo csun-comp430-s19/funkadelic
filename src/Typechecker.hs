@@ -5,7 +5,7 @@ import Control.Monad.State.Lazy
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Maybe
 import Prelude hiding (lookup)
-import Parser
+import Types
 import Data.Map
 
 -- Type environment
