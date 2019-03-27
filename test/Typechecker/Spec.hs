@@ -70,14 +70,14 @@ spec = do
             (evalState (typecheck (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "String") (ExpVariable $ Identifier "a") (Type $ Identifier "String"))) typeEnv) 
                 `shouldBe` Just (FunctionType (Type (Identifier "String")) (Type (Identifier "String")))
             let typeEnv = (Gamma [(Identifier "anotherFunk", mkType "String")])
+
+            -- anotherFunk is a string but typechecking it results in an int?
             (evalState (typecheck (FuncDefNullary (Identifier "anotherFunk") (ExpInteger 1234) (Type $ Identifier "Int"))) typeEnv)
                 `shouldBe` Just (Type (Identifier "Int"))
+
         it "FAILS on bad typechecker input" $ do
             let typeEnv = (Gamma [(Identifier "anotherFunk", mkType "String")])
             (evalState (typecheck (FuncDefNullary (Identifier "anotherFunk") (ExpInteger 1234) (Type $ Identifier "String"))) typeEnv) 
-                `shouldBe` Nothing
-            let typeEnv = (Gamma [(Identifier "anotherFunk", mkType "String")])
-            (evalState (typecheck (FuncDefNullary (Identifier "anotherFunk") (ExpVariable $ Identifier "a") (Type $ Identifier "String"))) typeEnv) 
                 `shouldBe` Nothing
             let typeEnv = (Gamma [(Identifier "anotherFunk", mkType "String")])
             (evalState (typecheck (FuncDefNullary (Identifier "anotherFunk") (ExpVariable $ Identifier "a") (Type $ Identifier "String"))) typeEnv) 
