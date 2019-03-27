@@ -67,3 +67,16 @@ tests:
     - hspec >= 2.6.0
     - template-haskell >= 2.11.0.0
     - hspec-expectations-match >= 0.2.0.0
+
+  Integration-Tests:
+    main:                Spec.hs
+    source-dirs:         test/Integration
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - Funkadelic
+    - hspec >= 2.6.0
+    - template-haskell >= 2.11.0.0
+    - hspec-expectations-match >= 0.2.0.0
