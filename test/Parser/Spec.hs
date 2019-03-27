@@ -18,7 +18,7 @@ parseTld input = parse' tldParser input
 
 spec = do
     describe "integer expressions" $ do
-        it "parses integer expressions" $ do
+        it "PASSES on good parser input" $ do
             parseIExp "1+1" `shouldBe` (Right $ IExp (IExpInt 1) Plus (IExpInt 1))
             parseIExp "x-1" `shouldBe` (Right $ IExp (IExpVar $ Identifier "x") Minus (IExpInt 1))
             parseIExp "x*y" `shouldBe` (Right $ IExp (IExpVar $ Identifier "x") Mult (IExpVar $ Identifier "y"))
@@ -31,7 +31,7 @@ spec = do
             parseIExp "2*x+y" `shouldBe` (Right (IExp (IExpInt 2) Mult (IExp (IExpVar $ Identifier "x") Plus (IExpVar $ Identifier "y"))))
             parseIExp "x*y==z" `shouldBe` (Right (IExp (IExpVar $ Identifier "x") Mult (IExp (IExpVar $ Identifier "y") Equals (IExpVar $ Identifier "z"))))
 
-        it "does not parse invalid integer expressions" $ do
+        it "FAILS on bad parser input" $ do
             (getRight $ parseIExp "2*_") `shouldBe` Nothing
             (getRight $ parseIExp "2*8a") `shouldBe` Nothing
             (getRight $ parseIExp "3^+2") `shouldBe` Nothing
@@ -43,7 +43,7 @@ spec = do
 
 
     describe "expressions" $ do
-        it "parses expressions" $ do
+        it "PASSES on good parser input" $ do
             parseExp "x" `shouldBe` (Right $ ExpVariable $ Identifier "x")
             parseExp "x23232" `shouldBe` (Right $ ExpVariable $ Identifier "x23232")
             parseExp "12323232" `shouldBe` (Right $ ExpInteger 12323232)
@@ -53,7 +53,7 @@ spec = do
             parseExp "name(x)" `shouldBe` (Right (ExpUnaryFOCall (Identifier "name") (ExpVariable $ Identifier "x")))
             parseExp "name()" `shouldBe` (Right (ExpNullaryFOCall (Identifier "name")))
 
-        it "does not parse invalid expressions" $ do
+        it "FAILS on bad parser input" $ do
             (getRight $ parseExp "2a") `shouldBe` Nothing
             (getRight $ parseExp "x23232 + _2") `shouldBe` Nothing
             (getRight $ parseExp "\"xyz\" + 5") `shouldBe` Nothing
@@ -65,7 +65,7 @@ spec = do
 
 
     describe "top level function and data definitions" $ do
-        it "parses tlds" $ do
+        it "PASSES on good parser input" $ do
             parseTld "datanewType=Nullary()" `shouldBe` (Right (DataDef (Identifier "newType") [NullaryConstructor $ Identifier "Nullary"]))
             parseTld "datanewType=Calculate(Integer)" `shouldBe` (Right (DataDef (Identifier "newType") [UnaryConstructor (Identifier "Calculate") (Type $ Identifier "Integer")]))
             parseTld "datanewType=SomeFunct()Calculate(Integer)" `shouldBe` (Right (DataDef (Identifier "newType") [(NullaryConstructor (Identifier "SomeFunct")), (UnaryConstructor (Identifier "Calculate") (Type $ Identifier "Integer"))]))
@@ -74,7 +74,7 @@ spec = do
             parseTld "funk=func():string{x*y}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExpVar (Identifier "y")))) (Type (Identifier "string"))))
             parseTld "funk=func():string{x*y+x==5}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string"))))
     
-        it "does not parse invalid tlds/data definitions" $ do
+        it "FAILS on bad parser input" $ do
             (getRight $ parseTld "datanewType=Nullary(") `shouldBe` Nothing
             (getRight $ parseTld "datanewType=Calculate") `shouldBe` Nothing
             (getRight $ parseTld "funk=func():string{}") `shouldBe` Nothing
