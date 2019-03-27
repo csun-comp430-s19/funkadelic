@@ -148,7 +148,7 @@ nullaryFDef = do
 lambda :: Parser Exp
 lambda = do
     _ <- string "\\("
-    parameter <- ExpVariable <$> identifier
+    parameter <- expParser
     _ <- string "):"
     parType <- identifier
     _ <- string "{"

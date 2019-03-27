@@ -96,10 +96,9 @@ spec = do
             (parseExpAndTypecheck "1" typeEnv) `shouldBe` intType
             (parseExpAndTypecheck "1+1" typeEnv) `shouldBe` intType
 
-            -- (parseExpAndTypecheck "\\(1234):Int{1234}:Int" typeEnv) `shouldBe` intType
-            -- (parseExpAndTypecheck "\\(1234):String{1234}:Int" typeEnv) `shouldBe` intType
-            -- (parseExpAndTypecheck "\\(1234):Int{1234}:String" typeEnv) `shouldBe` stringType
-            --- Tests above depend on if lambda is changed to have only variables as parameters
+            (parseExpAndTypecheck "\\(1234):Int{1234}:Int" typeEnv) `shouldBe` intType
+            (parseExpAndTypecheck "\\(1234):Int{\"1234\"}:String" typeEnv) `shouldBe` stringType
+
 
             let typeEnv = (Gamma [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "name", (mkFuncType "Int" "String"))])
             (parseExpAndTypecheck "name(x)" typeEnv) `shouldBe` stringType
@@ -118,9 +117,10 @@ spec = do
             (parseExpAndTypecheck "name(x)" typeEnv) `shouldBe` Nothing
             let typeEnv = (Gamma [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String")])
             (parseExpAndTypecheck "name(x)" typeEnv) `shouldBe` Nothing
+            (parseExpAndTypecheck "\\(1234):String{1234}:Int" typeEnv) `shouldBe` Nothing
+            (parseExpAndTypecheck "\\(1234):String{1234}:String" typeEnv) `shouldBe` Nothing
+            (parseExpAndTypecheck "\\(1234):Int{1234}:String" typeEnv) `shouldBe` Nothing
 
-            --let typeEnv = (Gamma [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "z", mkType "Int")])
-            --(evalState (typecheck (ExpLambda (ExpInteger 1234) (type' "Int") (ExpInteger 1234) (type' "String"))) typeEnv) `shouldBe` Nothing
 
 
      describe "integrate tlds with parser and typechecker" $ do
