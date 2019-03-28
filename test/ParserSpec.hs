@@ -50,6 +50,7 @@ pSpec = do
             parseExp "12323232" `shouldBe` (Right $ ExpInteger 12323232)
             parseExp "\"xyz\"" `shouldBe` (Right $ ExpString "xyz")
             parseExp "\\(x):String{x}:String" `shouldBe` (Right (ExpLambda (ExpVariable $ Identifier "x") (Type $ Identifier "String") (ExpVariable $ Identifier "x") (Type $ Identifier "String")))
+            parseExp "\\(1):Integer{1}:Integer" `shouldBe` (Right (ExpLambda (ExpInteger 1) (Type $ Identifier "Integer") (ExpInteger 1) (Type $ Identifier "Integer")))
             parseExp "x*y" `shouldBe` (Right $ ExpIExp $ IExp (IExpVar $ Identifier "x") Mult (IExpVar $ Identifier "y"))
             parseExp "name(x)" `shouldBe` (Right (ExpUnaryFOCall (Identifier "name") (ExpVariable $ Identifier "x")))
             parseExp "name()" `shouldBe` (Right (ExpNullaryFOCall (Identifier "name")))
