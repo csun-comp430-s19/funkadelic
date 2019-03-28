@@ -27,3 +27,13 @@ spec = do
             translate (ExpLambda (ExpVariable $ Identifier "x") (Type $ Identifier "String") (ExpVariable $ Identifier "y") (Type $ Identifier "String")) `shouldBe` "function(x) {y}"
             translate (ExpUnaryFOCall (Identifier "name") (ExpVariable $ Identifier "x")) `shouldBe` "name(x)"
             translate (ExpNullaryFOCall (Identifier "name")) `shouldBe` "name()"
+
+    describe "Constructor Definitionss" $ do
+        it "translates Constructor definitions into javascript" $ do
+            translate (NullaryConstructor $ Identifier "Nullary") `shouldBe` "Nullary()"
+
+    describe "Top Level Definitions" $ do
+        it "translates a Top Level Definitio into javascript" $ do
+            translate (DataDef (Identifier "x") [NullaryConstructor $ Identifier "Nullary"]) `shouldBe` "let x = new Nullary();"
+            translate (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "string") (ExpVariable $ Identifier "a") (Type $ Identifier "string")) `shouldBe` "function funk(a) {a}"
+            translate (FuncDefNullary (Identifier "funk") (ExpVariable $ Identifier "a") (Type $ Identifier "string")) `shouldBe` "function funk() {a}"
