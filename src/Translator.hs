@@ -9,7 +9,13 @@ class Translate a where
 instance Translate IExp where
     translate (IExpInt a) = (show a)
     translate (IExpVar (Identifier a)) = a
-    translate (IExp ie1 Plus ie2) = translate ie1 ++ " + " ++ translate ie2
-    translate (IExp ie1 Minus ie2) = translate ie1 ++ " - " ++ translate ie2
-    translate (IExp ie1 Mult ie2) = translate ie1 ++ " * " ++ translate ie2
-    translate (IExp ie1 Div ie2) = translate ie1 ++ " / " ++ translate ie2 
+    translate (IExp ie1 iBinOp ie2) = translate ie1 ++ " "++ (show iBinOp) ++ " " ++ translate ie2
+
+instance Translate Exp where
+    translate (ExpVariable (Identifier id)) = id
+    translate (ExpInteger a) = (show a)
+    translate (ExpString a) = (show a)
+    translate (ExpLambda e1 _ e2 _) = "function(" ++ (translate e1) ++ ") {" ++ (translate e2) ++ "}"
+    translate (ExpIExp a) = (translate a)
+    translate (ExpUnaryFOCall (Identifier id) e1) = id ++ "(" ++ (translate e1) ++ ")"
+    translate (ExpNullaryFOCall (Identifier id)) = id ++ "()"
