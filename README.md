@@ -1,5 +1,8 @@
 # Funkadelic [![Build Status](https://travis-ci.com/csun-comp430-s19/Funkadelic.svg?branch=master)](https://travis-ci.com/csun-comp430-s19/Funkadelic)
 
+### View coverage info for each module
+- <a href="https://travis-ci.com/csun-comp430-s19/Funkadelic">Our Latest Travis Build Output</a>
+
 ### Dependencies
 - <a href="https://docs.haskellstack.org/en/stable/README/">Stack</a>
 ### Running the tests

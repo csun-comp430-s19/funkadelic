@@ -1,10 +1,12 @@
 {-# LANGUAGE FlexibleContexts #-}
-module TranslatorSpec where
 import Parser hiding (type')
 import Translator
 import Test.Hspec
 
-trSpec = do
+main :: IO ()
+main = hspec spec
+
+spec = do
     describe "integer expressions" $ do
         it "translates integer expression into javascript" $ do
             translate (IExpInt 1) `shouldBe` "1"
