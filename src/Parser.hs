@@ -10,6 +10,7 @@ import Text.Parsec.Prim hiding (try)
 import Text.Parsec.Combinator 
 import Text.ParserCombinators.Parsec
 
+
 -- Explicitly create type (type in haskell) called Type (type in our Funkadelic)
 -- which derives the typeclasses show and eq
 -- Takes in an Identifier in its constructor
@@ -68,6 +69,13 @@ data Exp =
     |   ExpUnaryFOCall Identifier Exp
     |   ExpNullaryFOCall Identifier
     deriving (Show, Eq)
+
+-- shortcut for constructing a type
+mkType :: String -> Type 
+mkType t = Type $ Identifier t
+
+mkFuncType :: String -> String -> Type
+mkFuncType p r = (FunctionType (Type $ Identifier p) (Type $ Identifier r))
 
 -- Parser for a top level definition
 tldParser :: Parser Tld
@@ -205,7 +213,7 @@ nullaryFDef = do
 lambda :: Parser Exp
 lambda = do
     _ <- string "\\("
-    parameter <- ExpVariable <$> identifier
+    parameter <- expParser
     _ <- string "):"
     parType <- identifier
     _ <- string "{"
@@ -245,16 +253,9 @@ identifier = do
     firstChar = satisfy (\a -> isLetter a)
     followingChars = satisfy (\a -> isDigit a || isLetter a)
 
--- generates a parser for an arbirtrary type
+-- generates a parser for an arbitrary type
 type' :: Parser Type
 type' = Type <$> identifier
-
--- shortcut for constructing a type
-mkType :: String -> Type 
-mkType t = Type $ Identifier t
-
-mkFuncType :: String -> String -> Type
-mkFuncType p r = (FunctionType (Type $ Identifier p) (Type $ Identifier r))
 
 -- Ensures an integer is composed of digits 0-9
 -- numNumeric ::= “0” | “1” | “2” | “3” | “4” | “5” | “6” | “7” | “8” | “9”
