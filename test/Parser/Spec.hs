@@ -1,6 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
 import Parser hiding (type')
-import Types
 import Test.Hspec
 
 main :: IO ()

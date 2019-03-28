@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
-import Types
+import Parser hiding (type')
 import Typechecker
 import Test.Hspec
 import Control.Monad.State.Lazy
