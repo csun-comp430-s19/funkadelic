@@ -25,9 +25,17 @@ newtype Identifier = Identifier String deriving (Show, Eq, Ord)
 
 -- iBinaryOperator type
 -- Create a type for all possible binary operations
--- ⊗∃IBinOp ::= “+” | “-” | “*” | “/” | “^” | “==”
+-- ⊗∃IBinOp ::= “+” | “-” | “*” | “/” | “**” | “==”
 data IBinOp = Plus | Minus | Mult | Div | Exponent | Equals 
-    deriving (Show, Eq)
+    deriving (Eq)
+
+instance Show IBinOp where
+    show Plus = "+"
+    show Minus = "-"
+    show Mult = "*"
+    show Div = "/"
+    show Equals = "=="
+    show Exponent = "**"
 
 -- Constructor definition type
 -- Equivalent to an AST of CDef
