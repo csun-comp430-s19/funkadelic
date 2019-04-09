@@ -21,10 +21,10 @@ instance Translate Exp where
     translate (ExpNullaryFOCall (Identifier id)) = id ++ "()"
 
 instance Translate CDef where
-    translate (NullaryConstructor (Identifier id)) = id ++ "()"
+    translate (NullaryConstructor (Identifier id)) = id ++ ":{}"
     -- translate (UnaryConstructor (Identifier id) _) = id ++ "()" -- NEEDS Monadic implementation to generate variable names
 
 instance Translate Tld where
-    translate (DataDef (Identifier id) [c]) = "let " ++ id ++ " = new " ++ (translate c) ++ ";" 
+    translate (DataDef (Identifier id) [c]) = "let " ++ id ++ " = Data(function(){ " ++ (translate c) ++ "};" 
     translate (FuncDefUnary (Identifier fName) (Identifier pName) _ e1 _) = "function " ++ fName ++ "(" ++ pName ++ ") { " ++ (translate e1) ++ " }"
     translate (FuncDefNullary (Identifier fName) e1 _) = "function " ++ fName ++ "() { " ++ (translate e1) ++ " }"
