@@ -115,8 +115,9 @@ cDefParser =
 -- parser for product type expressions
 product' :: Parser Exp
 product' = do
-    _ <- char '('
+    _ <- char '<'
     exps <- sepBy expParser (char ',')
+    _ <- char '>'
     return $ ExpProduct exps
 
 -- Parser for an expression
@@ -124,6 +125,7 @@ expParser :: Parser Exp
 expParser = 
     try unaryFOCall
     -- <|> try let'
+    <|> try product'
     <|> try nullaryFOCall
     <|> try lambda
     <|> ExpIExp <$> (try iExpTerm)

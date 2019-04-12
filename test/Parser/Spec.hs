@@ -51,6 +51,7 @@ spec = do
             parseExp "x*y" `shouldBe` (Right $ ExpIExp $ IExp (IExpVar $ Identifier "x") Mult (IExpVar $ Identifier "y"))
             parseExp "name(x)" `shouldBe` (Right (ExpUnaryFOCall (Identifier "name") (ExpVariable $ Identifier "x")))
             parseExp "name()" `shouldBe` (Right (ExpNullaryFOCall (Identifier "name")))
+            parseExp "<1,2,3,4>" `shouldBe` (Right (ExpProduct [ExpInteger 1, ExpInteger 2, ExpInteger 3, ExpInteger 4]))
 
         it "FAILS on bad parser input" $ do
             (getRight $ parseExp "2a") `shouldBe` Nothing
