@@ -70,6 +70,7 @@ data IExp =
 data Exp = 
         ExpVariable Identifier
     -- |   ExpLet Identifier Exp Type Exp 
+    |   ExpProduct [Exp]
     |   ExpInteger Integer
     |   ExpString String
     |   ExpIExp IExp
@@ -110,6 +111,13 @@ cDefParser =
 --     _ <- string "in"
 --     exp <- expParser
 --     return $ ExpLet name value t exp
+
+-- parser for product type expressions
+product' :: Parser Exp
+product' = do
+    _ <- char '('
+    exps <- sepBy expParser (char ',')
+    return $ ExpProduct exps
 
 -- Parser for an expression
 expParser :: Parser Exp
