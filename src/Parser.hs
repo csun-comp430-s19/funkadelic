@@ -51,9 +51,14 @@ data CDef =
 -- tLd∃TopLevelDefinition :: name “= func(” name “:” Type “):”Type”{” exp “}” | “data” name “=” uDtDef
 -- Either a function definition or a data definition
 data Tld = 
+        Func Function
+    |   DataDef Identifier [CDef]
+    -- | TypeclassDef Identifier [Function]
+    deriving (Show, Eq)
+
+data Function = 
         FuncDefUnary Identifier Identifier Type Exp Type 
     |   FuncDefNullary Identifier Exp Type
-    |   DataDef Identifier [CDef]
     deriving (Show, Eq)
 
 -- iExpression type
@@ -89,7 +94,17 @@ mkFuncType p r = (FunctionType (Type $ Identifier p) (Type $ Identifier r))
 tldParser :: Parser Tld
 tldParser = 
     try dDef 
-    <|> try nullaryFDef
+    <|> tldFunctionParser
+    -- <|> tDef
+
+tldFunctionParser :: Parser Tld
+tldFunctionParser = do
+    function <- functionParser
+    return $ Func function
+
+functionParser :: Parser Function
+functionParser = 
+    try nullaryFDef
     <|> unaryFDef
 
 -- Parser for a constructor definition
@@ -188,9 +203,17 @@ dDef = do
     cDefs <- many1 cDefParser
     return $ DataDef name cDefs -- Note: cDefs is a list of constructor defs
 
+-- tDef :: Parser Tld
+-- tDef = do
+--     _ <- string "typeclass"
+--     name <- identifier
+--     functions <- many1 functionParser
+--     return $ TypeclassDef name functions
+
+
 -- Extract the name and parameter name & type, return type, and expression
 -- Lifts the extracted values into the monad FuncDefUnary
-unaryFDef :: Parser Tld
+unaryFDef :: Parser Function
 unaryFDef = do
     name <- identifier
     _ <- string "=func("
@@ -206,7 +229,7 @@ unaryFDef = do
 
 -- Extract the name, return type, and expression
 -- Lifts the extracted values into the monad FuncDefNullary
-nullaryFDef :: Parser Tld
+nullaryFDef :: Parser Function
 nullaryFDef = do
     name <- identifier
     _ <- string "=func():"

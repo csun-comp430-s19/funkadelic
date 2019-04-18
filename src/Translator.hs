@@ -26,5 +26,5 @@ instance Translate CDef where
 
 instance Translate Tld where
     translate (DataDef (Identifier id) [c]) = "let " ++ id ++ " = Data(function(){ " ++ (translate c) ++ "};" 
-    translate (FuncDefUnary (Identifier fName) (Identifier pName) _ e1 _) = "function " ++ fName ++ "(" ++ pName ++ ") { " ++ (translate e1) ++ " }"
-    translate (FuncDefNullary (Identifier fName) e1 _) = "function " ++ fName ++ "() { " ++ (translate e1) ++ " }"
+    translate (Func (FuncDefUnary (Identifier fName) (Identifier pName) _ e1 _)) = "function " ++ fName ++ "(" ++ pName ++ ") { " ++ (translate e1) ++ " }"
+    translate (Func (FuncDefNullary (Identifier fName) e1 _)) = "function " ++ fName ++ "() { " ++ (translate e1) ++ " }"

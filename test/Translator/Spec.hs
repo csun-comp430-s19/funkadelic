@@ -35,5 +35,5 @@ spec = do
     describe "Top Level Definitions" $ do
         it "translates a Top Level Definition into javascript" $ do
             translate (DataDef (Identifier "x") [NullaryConstructor $ Identifier "Nullary"]) `shouldBe` "let x = Data(function(){ Nullary:{}};"
-            translate (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "string") (ExpVariable $ Identifier "a") (Type $ Identifier "string")) `shouldBe` "function funk(a) { a }"
-            translate (FuncDefNullary (Identifier "funk") (ExpVariable $ Identifier "a") (Type $ Identifier "string")) `shouldBe` "function funk() { a }"
+            translate (Func (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "string") (ExpVariable $ Identifier "a") (Type $ Identifier "string"))) `shouldBe` "function funk(a) { a }"
+            translate (Func (FuncDefNullary (Identifier "funk") (ExpVariable $ Identifier "a") (Type $ Identifier "string"))) `shouldBe` "function funk() { a }"

@@ -67,21 +67,21 @@ spec = do
     describe "typechecking tlds" $ do
         it "PASSES on good typechecker input" $ do
             let typeEnv = (Gamma [(Identifier "funk", mkType "String")])
-            (evalState (typecheck (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "String") (ExpVariable $ Identifier "a") (Type $ Identifier "String"))) typeEnv) 
+            (evalState (typecheck (Func (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "String") (ExpVariable $ Identifier "a") (Type $ Identifier "String")))) typeEnv) 
                 `shouldBe` Just (FunctionType (Type (Identifier "String")) (Type (Identifier "String")))
             let typeEnv = (Gamma [(Identifier "anotherFunk", mkType "String")])
 
             -- anotherFunk is a string but typechecking it results in an int?
-            (evalState (typecheck (FuncDefNullary (Identifier "anotherFunk") (ExpInteger 1234) (Type $ Identifier "Int"))) typeEnv)
+            (evalState (typecheck (Func (FuncDefNullary (Identifier "anotherFunk") (ExpInteger 1234) (Type $ Identifier "Int")))) typeEnv)
                 `shouldBe` Just (Type (Identifier "Int"))
 
         it "FAILS on bad typechecker input" $ do
             let typeEnv = (Gamma [(Identifier "anotherFunk", mkType "String")])
-            (evalState (typecheck (FuncDefNullary (Identifier "anotherFunk") (ExpInteger 1234) (Type $ Identifier "String"))) typeEnv) 
+            (evalState (typecheck (Func (FuncDefNullary (Identifier "anotherFunk") (ExpInteger 1234) (Type $ Identifier "String")))) typeEnv) 
                 `shouldBe` Nothing
             let typeEnv = (Gamma [(Identifier "anotherFunk", mkType "String")])
-            (evalState (typecheck (FuncDefNullary (Identifier "anotherFunk") (ExpVariable $ Identifier "a") (Type $ Identifier "String"))) typeEnv) 
+            (evalState (typecheck (Func (FuncDefNullary (Identifier "anotherFunk") (ExpVariable $ Identifier "a") (Type $ Identifier "String")))) typeEnv) 
                 `shouldBe` Nothing
             let typeEnv = (Gamma [(Identifier "function", mkType "String")])
-            (evalState (typecheck (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string")))) typeEnv)
+            (evalState (typecheck (Func (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string"))))) typeEnv)
                 `shouldBe` Nothing
