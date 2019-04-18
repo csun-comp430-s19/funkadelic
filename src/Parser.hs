@@ -94,7 +94,7 @@ mkFuncType p r = (FunctionType (Type $ Identifier p) (Type $ Identifier r))
 tldParser :: Parser Tld
 tldParser = 
     try dDef 
-    <|> tldFunctionParser
+    <|> try tldFunctionParser
     <|> tDef
 
 tldFunctionParser :: Parser Tld
@@ -205,8 +205,8 @@ dDef = do
 
 tDef :: Parser Tld
 tDef = do
-    _ <- string "typeclass"
     name <- identifier
+    _ <- string "=typeclass:"
     functions <- many1 functionParser
     return $ TypeclassDef name functions
 
