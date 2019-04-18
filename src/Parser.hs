@@ -53,7 +53,7 @@ data CDef =
 data Tld = 
         Func Function
     |   DataDef Identifier [CDef]
-    -- | TypeclassDef Identifier [Function]
+    |   TypeclassDef Identifier [Function]
     deriving (Show, Eq)
 
 data Function = 
@@ -95,7 +95,7 @@ tldParser :: Parser Tld
 tldParser = 
     try dDef 
     <|> tldFunctionParser
-    -- <|> tDef
+    <|> tDef
 
 tldFunctionParser :: Parser Tld
 tldFunctionParser = do
@@ -203,12 +203,12 @@ dDef = do
     cDefs <- many1 cDefParser
     return $ DataDef name cDefs -- Note: cDefs is a list of constructor defs
 
--- tDef :: Parser Tld
--- tDef = do
---     _ <- string "typeclass"
---     name <- identifier
---     functions <- many1 functionParser
---     return $ TypeclassDef name functions
+tDef :: Parser Tld
+tDef = do
+    _ <- string "typeclass"
+    name <- identifier
+    functions <- many1 functionParser
+    return $ TypeclassDef name functions
 
 
 -- Extract the name and parameter name & type, return type, and expression
