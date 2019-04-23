@@ -23,6 +23,10 @@ data Type =
 -- Constructor takes in a string (Token)
 newtype Identifier = Identifier String deriving (Show, Eq, Ord)
 
+newtype GIdentifier = GIdentifier String deriving (Show, Eq, Ord)
+
+newtype Generic = Generic GIdentifier deriving (Show, Eq)
+
 -- iBinaryOperator type
 -- Create a type for all possible binary operations
 -- ⊗∃IBinOp ::= “+” | “-” | “*” | “/” | “**” | “==”
@@ -53,8 +57,15 @@ data CDef =
 data Tld = 
         Func Function
     |   DataDef Identifier [CDef]
-    |   TypeclassDef Identifier Identifier Identifier [Function]
+    |   TypeclassDef Identifier [SignatureDef]
+    |   TypeclassImp Identifier [SignatureImp]
     deriving (Show, Eq)
+
+data SignatureDef =
+    SigDef Identifier Generic Generic deriving (Show, Eq)
+
+data SignatureImp =
+    SigImp Identifier Type Type Exp deriving (Show, Eq)
 
 data Function = 
         FuncDefUnary Identifier Identifier Type Exp Type 
@@ -95,7 +106,8 @@ tldParser :: Parser Tld
 tldParser = 
     try dDef 
     <|> try tldFunctionParser
-    <|> tDef
+    <|> try tDef
+    <|> tImp
 
 tldFunctionParser :: Parser Tld
 tldFunctionParser = do
@@ -112,6 +124,29 @@ cDefParser :: Parser CDef
 cDefParser = 
     try unaryCDef 
     <|> nullaryCDef
+
+sigDefParser :: Parser SignatureDef
+sigDefParser = do
+    sigName <- identifier
+    _ <- string "["
+    signatureInput <- Generic <$> gIdentifier
+    _ <- string "->"
+    signatureOutput <- Generic <$> gIdentifier
+    _ <- char ']'
+    return $ SigDef sigName signatureInput signatureOutput
+
+sigImpParser :: Parser SignatureImp
+sigImpParser = do
+    sigName <- identifier
+    _ <- string ":["
+    signatureInput <- Type <$> identifier
+    _ <- string "->"
+    signatureOutput <- Type <$> identifier
+    _ <- char ']'
+    _ <- char '{'
+    body <- expParser
+    _ <- char '}'
+    return $ SigImp sigName signatureInput signatureOutput body
 
 -- parser for let expressions
 -- let' :: Parser Exp
@@ -205,17 +240,18 @@ dDef = do
 
 tDef :: Parser Tld
 tDef = do
+    _ <- string "typeclass:"
     name <- identifier
-    _ <- string "=typeclass:"
-    _ <- string "sig:"
-    _ <- char '{'
-    signatureInput <- identifier
-    _ <- string "->"
-    signatureOutput <- identifier
-    _ <- char '}'
-    _ <- string "imps:"
-    functions <- many1 functionParser
-    return $ TypeclassDef name signatureInput signatureOutput functions
+    _ <- char ':'
+    sigs <- many1 sigDefParser
+    return $ TypeclassDef name sigs
+
+tImp :: Parser Tld
+tImp = do
+    _ <- string "instance:"
+    typeclass <- identifier -- existing typeclass name
+    sigs <- many1 sigImpParser
+    return $ TypeclassImp typeclass sigs
 
 
 -- Extract the name and parameter name & type, return type, and expression
@@ -290,6 +326,19 @@ identifier = do
   where
     firstChar = satisfy (\a -> isLetter a)
     followingChars = satisfy (\a -> isDigit a || isLetter a)
+
+-- Extract the function name
+-- Lifts the extracted values into the monad Identifier
+-- Note: Identifiers must start with an alphabetical character
+gIdentifier :: Parser GIdentifier
+gIdentifier = do
+    first <- firstChar -- should be a letter
+    rest <- many followingChars
+    return $ GIdentifier (first:rest)
+  where
+    firstChar = satisfy (\a -> isLetter a)
+    followingChars = satisfy (\a -> isDigit a || isLetter a)
+
 
 -- generates a parser for an arbitrary type
 type' :: Parser Type
