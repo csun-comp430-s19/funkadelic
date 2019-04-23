@@ -53,7 +53,7 @@ data CDef =
 data Tld = 
         Func Function
     |   DataDef Identifier [CDef]
-    |   TypeclassDef Identifier Type Type [Function]
+    |   TypeclassDef Identifier Identifier Identifier [Function]
     deriving (Show, Eq)
 
 data Function = 
@@ -209,9 +209,9 @@ tDef = do
     _ <- string "=typeclass:"
     _ <- string "sig:"
     _ <- char '{'
-    signatureInput <- Type <$> identifier
+    signatureInput <- identifier
     _ <- string "->"
-    signatureOutput <- Type <$> identifier
+    signatureOutput <- identifier
     _ <- char '}'
     _ <- string "imps:"
     functions <- many1 functionParser

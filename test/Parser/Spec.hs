@@ -72,7 +72,7 @@ spec = do
             parseTld "funk=func():string{a}" `shouldBe` (Right (Func (FuncDefNullary (Identifier "funk") (ExpVariable $ Identifier "a") (Type $ Identifier "string"))))
             parseTld "funk=func():string{x*y}" `shouldBe` (Right (Func (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExpVar (Identifier "y")))) (Type (Identifier "string")))))
             parseTld "funk=func():string{x*y+x==5}" `shouldBe` (Right (Func (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string")))))
-            parseTld "eq=typeclass:sig:{String->String}imps:eq=func(a:string):string{a}" `shouldBe` (Right (TypeclassDef (Identifier "eq") (Type $ Identifier "String") (Type $ Identifier "String") [FuncDefUnary (Identifier "eq") (Identifier "a") (Type (Identifier "string")) (ExpVariable (Identifier "a")) (Type (Identifier "string"))]))
+            parseTld "eq=typeclass:sig:{a->b}imps:eq=func(a:string):string{a}" `shouldBe` (Right (TypeclassDef (Identifier "eq") (Identifier "String") (Identifier "String") [FuncDefUnary (Identifier "eq") (Identifier "a") (Type (Identifier "string")) (ExpVariable (Identifier "a")) (Type (Identifier "string"))]))
 
 
 
