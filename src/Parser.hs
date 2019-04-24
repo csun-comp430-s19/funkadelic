@@ -65,7 +65,7 @@ data SignatureDef =
     SigDef Identifier Generic Generic deriving (Show, Eq)
 
 data SignatureImp =
-    SigImp Identifier Type Type Exp deriving (Show, Eq)
+    SigImp Identifier Type Type Identifier Exp deriving (Show, Eq)
 
 data Function = 
         FuncDefUnary Identifier Identifier Type Exp Type 
@@ -138,15 +138,18 @@ sigDefParser = do
 sigImpParser :: Parser SignatureImp
 sigImpParser = do
     sigName <- identifier
-    _ <- string ":["
+    _ <- string "["
     signatureInput <- Type <$> identifier
     _ <- string "->"
     signatureOutput <- Type <$> identifier
     _ <- char ']'
+    _ <- char '('
+    inputName <- identifier
+    _ <- char ')'
     _ <- char '{'
     body <- expParser
     _ <- char '}'
-    return $ SigImp sigName signatureInput signatureOutput body
+    return $ SigImp sigName signatureInput signatureOutput inputName body
 
 -- parser for let expressions
 -- let' :: Parser Exp
@@ -250,6 +253,7 @@ tImp :: Parser Tld
 tImp = do
     _ <- string "instance:"
     typeclass <- identifier -- existing typeclass name
+    _ <- char ':'
     sigs <- many1 sigImpParser
     return $ TypeclassImp typeclass sigs
 
