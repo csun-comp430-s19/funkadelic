@@ -76,8 +76,12 @@ data Exp =
     |   ExpLambda Exp Type Exp Type
     |   ExpUnaryFOCall Identifier Exp
     |   ExpNullaryFOCall Identifier
+    |   ExpPatternMatchCall Exp Type [Pme]
     deriving (Show, Eq)
 
+data Pme =
+    PatternMatchExpression Identifier [Identifier] Exp
+    deriving(Show, Eq)
 -- shortcut for constructing a type
 mkType :: String -> Type 
 mkType t = Type $ Identifier t
@@ -118,6 +122,7 @@ expParser =
     -- <|> try let'
     <|> try nullaryFOCall
     <|> try lambda
+    <|> try patternMatchCall
     <|> ExpIExp <$> (try iExpTerm)
     <|> expAtom
 
@@ -248,6 +253,25 @@ nullaryFOCall = do
     _ <- string "()"
     return $ ExpNullaryFOCall fName
 
+
+patternMatchCall :: Parser Exp
+patternMatchCall = do
+    _ <- string "case "
+    pattern <- expParser
+    _ <- char ':'
+    retType <- Type <$> identifier
+    _ <- string " of "
+    cases <- many1 pmeParser
+    return $ ExpPatternMatchCall pattern retType cases
+    
+pmeParser :: Parser Pme
+pmeParser = do
+    cName <- identifier
+    _ <- char '('
+    parameters <- identifier `sepBy` (char ',')
+    _ <- string ")->"
+    returnExp <- expParser
+    return $ PatternMatchExpression cName parameters returnExp
 
 -- Extract the function name
 -- Lifts the extracted values into the monad Identifier

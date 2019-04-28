@@ -55,7 +55,7 @@ Algebraic data-types, typechecker; Users will be able to define and combine type
 
 - exp∃Expression ::= x | i | s | ie | case exp:τ of (pme)+ | \(exp){exp}:τ | name(exp) **Function call**
 
-- exp∃PatternMatchExpressioon ::= name((name { "," name})*) -> exp
+- exp∃PatternMatchExpressioon ::= name((name { "," name})*)->exp
 
 - cDef∃ConstructorDefinition ::= name(τ∗)
 
