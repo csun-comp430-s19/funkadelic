@@ -51,7 +51,10 @@ spec = do
             parseExp "x*y" `shouldBe` (Right $ ExpIExp $ IExp (IExpVar $ Identifier "x") Mult (IExpVar $ Identifier "y"))
             parseExp "name(x)" `shouldBe` (Right (ExpUnaryFOCall (Identifier "name") (ExpVariable $ Identifier "x")))
             parseExp "name()" `shouldBe` (Right (ExpNullaryFOCall (Identifier "name")))
-            parseExp "case 12:Integer of name(thing,other)->\"xyz\"" `shouldBe` (Right (ExpInteger 12) $ (Type $ Identifier "Integer") $ (Identifier "name") $ ((Identifier "thing") (Identifier "other")) (Right $ ExpString "xyz"))
+            parseExp "case 12:Integer of name()->\"xyz\"" `shouldBe` (Right (ExpPatternMatchCall (ExpInteger 12) (Type $ Identifier "Integer") [PatternMatchExpression (Identifier "name") [] (ExpString "xyz")] ))
+            parseExp "case 12:Integer of name()->\"xyz\"other()->\"abc\"" `shouldBe` (Right (ExpPatternMatchCall (ExpInteger 12) (Type $ Identifier "Integer") [PatternMatchExpression (Identifier "name") [] (ExpString "xyz"), PatternMatchExpression (Identifier "other") [] (ExpString "abc")] ))
+            parseExp "case 12:Integer of name(thing)->\"xyz\"" `shouldBe` (Right (ExpPatternMatchCall (ExpInteger 12) (Type $ Identifier "Integer") [PatternMatchExpression (Identifier "name") [Identifier "thing"] (ExpString "xyz")] ))
+            parseExp "case 12:Integer of name(thing,other)->\"xyz\"" `shouldBe` (Right (ExpPatternMatchCall (ExpInteger 12) (Type $ Identifier "Integer") [PatternMatchExpression (Identifier "name") [Identifier "thing", Identifier "other"] (ExpString "xyz")] ))
 
         it "FAILS on bad parser input" $ do
             (getRight $ parseExp "2a") `shouldBe` Nothing
