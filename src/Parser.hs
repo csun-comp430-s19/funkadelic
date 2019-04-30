@@ -76,7 +76,7 @@ data Exp =
     |   ExpLambda Exp Type Exp Type
     |   ExpUnaryFOCall Identifier Exp
     |   ExpNullaryFOCall Identifier
-    |   ExpPatternMatchCall Exp Type [Pme]
+    |   ExpPatternMatchCall Exp Type Type [Pme]
     deriving (Show, Eq)
 
 data Pme =
@@ -259,10 +259,12 @@ patternMatchCall = do
     _ <- string "case "
     pattern <- expParser
     _ <- char ':'
+    expType <- Type <$> identifier
+    _ <- string " of:"
     retType <- Type <$> identifier
-    _ <- string " of "
+    _ <- char ' '
     cases <- many1 pmeParser
-    return $ ExpPatternMatchCall pattern retType cases
+    return $ ExpPatternMatchCall pattern expType retType cases
     
 pmeParser :: Parser Pme
 pmeParser = do
