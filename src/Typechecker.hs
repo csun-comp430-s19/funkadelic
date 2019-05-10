@@ -104,11 +104,11 @@ instance Typecheck Exp where
         case getType fName gamma of
             Just t -> return (Just t)
             Nothing -> return Nothing
-    typecheck (ExpPatternMatchCall e1 paramType returnType Pmes) = do 
-        e1t <- typecheck e1
-        gamma <- get 
-        case e1t == (just paramType) of
-            True -> do
+    -- typecheck (ExpPatternMatchCall e1 paramType returnType Pmes) = do 
+    --     e1t <- typecheck e1
+    --     gamma <- get 
+    --     case e1t == (just paramType) of
+    --         True -> do
                 
 
-            False -> return Nothing
+    --         False -> return Nothing

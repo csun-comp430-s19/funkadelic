@@ -17,7 +17,7 @@ import Text.ParserCombinators.Parsec
 data Type = 
         Type Identifier 
     |   FunctionType Type Type
-    deriving (Show, Eq)
+    deriving (Show, Eq, Ord)
 
 -- Create type called Identifier
 -- Constructor takes in a string (Token)
