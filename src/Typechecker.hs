@@ -33,6 +33,20 @@ getIdentifiers t (Gamma (_, TldMap m, _, _)) = do
     where
         gMap = fromList m
 
+getTcDefIdentifiers :: Identifier -> Gamma -> Maybe [SignatureDef]
+getTcDefIdentifiers tc (Gamma (_, _, TcDef td, _)) = do
+    [sigDefs] <- lookup tc gMap
+    return [sigDefs]
+    where
+        gMap = fromList td 
+
+getTcImpIdentifiers :: Identifier -> Gamma -> Maybe [SignatureImp]
+getTcImpIdentifiers tc (Gamma (_, _, _, TcImp ti)) = do
+    [sigImps] <- lookup tc gMap
+    return [sigImps]
+    where
+        gMap = fromList ti
+
 
 -- checkPme :: Type -> Type -> Identifier -> [Identifier] -> Exp -> Maybe Type
 -- checkPme pType rType cName _ e1 = do
@@ -67,6 +81,8 @@ instance Typecheck Tld where
                 _ <- put $ addEntryToEnv fName t gamma
                 return $ Just t
             False -> return Nothing
+
+
     
 
 
