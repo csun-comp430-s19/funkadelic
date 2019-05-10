@@ -86,11 +86,11 @@ instance Typecheck Tld where
             False -> return Nothing
     typecheck (TypeclassDef defName defSigs) = do
         gamma <- get
-        existingSigs <- getTcDefIdentifiers defName gamma
-        case existingSigs == Nothing of
+        case getTcDefIdentifiers defName gamma == Nothing of
             True -> do
-                _ <- put $ addTcDefToGamma defName defSigs
-                return (Just (Type (Identifier "typeclass")))
+                gamma <- get
+                _ <- put $ addTcDefToGamma defName defSigs gamma
+                return $ Just (Type (Identifier "typeclass"))
             False -> return Nothing
             -- TODO: check to see if sig each sig in defSigs is not in existingSigs
 
