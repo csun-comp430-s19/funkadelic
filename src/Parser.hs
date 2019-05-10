@@ -340,7 +340,7 @@ gIdentifier = do
     rest <- many followingChars
     return $ GIdentifier (first:rest)
   where
-    firstChar = satisfy (\a -> isLetter a)
+    firstChar = satisfy (\a -> a == '?')
     followingChars = satisfy (\a -> isDigit a || isLetter a)
 
 
