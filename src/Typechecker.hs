@@ -19,6 +19,9 @@ data TcImp = TcImp [(Identifier, [SignatureImp])] deriving (Show)
 addEntryToEnv :: Identifier -> Type -> Gamma -> Gamma
 addEntryToEnv n t (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = Gamma (Env (l ++ [(n,t)]), TldMap m, TcDef td, TcImp ti)
 
+addTcDefToGamma :: Identifier -> [SignatureDef] -> Gamma -> Gamma
+addTcDefToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = Gamma (Env l, TldMap m, TcDef (td ++ [(n, s)]), TcImp ti)
+
 getType :: Identifier -> Gamma -> Maybe Type
 getType x (Gamma (Env l, _, _, _)) = do
     t <- lookup x gMap
@@ -28,22 +31,22 @@ getType x (Gamma (Env l, _, _, _)) = do
 
 getIdentifiers :: Type -> Gamma -> Maybe [CDef]
 getIdentifiers t (Gamma (_, TldMap m, _, _)) = do
-    [c] <- lookup t gMap
-    return [c]
+    c <- lookup t gMap
+    return c
     where
         gMap = fromList m
 
 getTcDefIdentifiers :: Identifier -> Gamma -> Maybe [SignatureDef]
 getTcDefIdentifiers tc (Gamma (_, _, TcDef td, _)) = do
-    [sigDefs] <- lookup tc gMap
-    return [sigDefs]
+    sigDefs <- lookup tc gMap
+    return sigDefs
     where
         gMap = fromList td 
 
 getTcImpIdentifiers :: Identifier -> Gamma -> Maybe [SignatureImp]
 getTcImpIdentifiers tc (Gamma (_, _, _, TcImp ti)) = do
-    [sigImps] <- lookup tc gMap
-    return [sigImps]
+    sigImps <- lookup tc gMap
+    return sigImps
     where
         gMap = fromList ti
 
@@ -71,7 +74,7 @@ instance Typecheck Tld where
                 _ <- put $ addEntryToEnv fName functionType gamma
                 return (Just functionType)
                 where
-                    functionType = FunctionType inType  outType
+                    functionType = FunctionType inType outType
             False -> return Nothing
     typecheck (Func (FuncDefNullary fName body t)) = do
         actualType <- typecheck body
@@ -81,6 +84,15 @@ instance Typecheck Tld where
                 _ <- put $ addEntryToEnv fName t gamma
                 return $ Just t
             False -> return Nothing
+    typecheck (TypeclassDef defName defSigs) = do
+        gamma <- get
+        existingSigs <- getTcDefIdentifiers defName gamma
+        case existingSigs == Nothing of
+            True -> do
+                _ <- put $ addTcDefToGamma defName defSigs
+                return (Just (Type (Identifier "typeclass")))
+            False -> return Nothing
+            -- TODO: check to see if sig each sig in defSigs is not in existingSigs
 
 
     
