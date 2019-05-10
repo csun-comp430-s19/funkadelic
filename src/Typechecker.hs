@@ -9,17 +9,36 @@ import Parser
 import Data.Map
 
 -- Type environment
-data Gamma = Gamma [(Identifier, Type)] deriving (Show)
+data Gamma = Gamma (Env, TldMap) deriving (Show)
+data Env = Env [(Identifier, Type)] deriving (Show)
+data TldMap = TldMap [(Type, [CDef])] deriving (Show)
 
-addEntry :: Identifier -> Type -> Gamma -> Gamma
-addEntry n t (Gamma l) = Gamma (l ++ [(n,t)])
+addEntryToEnv :: Identifier -> Type -> Gamma -> Gamma
+addEntryToEnv n t (Gamma (Env l, TldMap m)) = Gamma (Env (l ++ [(n,t)]), TldMap m)
 
 getType :: Identifier -> Gamma -> Maybe Type
-getType x (Gamma l) = do
+getType x (Gamma (Env l, _)) = do
     t <- lookup x gMap
     return t
     where
         gMap = fromList l
+
+getIdentifiers :: Type -> Gamma -> Maybe [CDef]
+getIdentifiers t (Gamma (_, TldMap m)) = do
+    [c] <- lookup t gMap
+    return [c]
+    where
+        gMap = fromList m
+
+
+-- checkPme :: Type -> Type -> Identifier -> [Identifier] -> Exp -> Maybe Type
+-- checkPme pType rType cName _ e1 = do
+--     case (Just pType) == typecheck cName of
+--         True -> do
+--             case (Just rType) == typecheck e1 of
+--                 True -> return (Just rType)
+--                 False -> return Nothing
+--         False -> return Nothing
 
 class Typecheck a where
     typecheck :: a -> State Gamma (Maybe Type)
@@ -28,11 +47,11 @@ class Typecheck a where
 instance Typecheck Tld where
     typecheck (FuncDefUnary fName var inType body outType) = do
         gamma <- get
-        _ <- put $ addEntry var inType gamma
+        _ <- put $ addEntryToEnv var inType gamma
         actualOutType <- typecheck body
         case actualOutType == Just outType of
             True -> do
-                _ <- put $ addEntry fName functionType gamma
+                _ <- put $ addEntryToEnv fName functionType gamma
                 return (Just functionType)
                 where
                     functionType = FunctionType inType  outType
@@ -42,7 +61,7 @@ instance Typecheck Tld where
         case actualType == Just t of
             True -> do
                 gamma <- get
-                _ <- put $ addEntry fName t gamma
+                _ <- put $ addEntryToEnv fName t gamma
                 return $ Just t
             False -> return Nothing
     
@@ -85,3 +104,11 @@ instance Typecheck Exp where
         case getType fName gamma of
             Just t -> return (Just t)
             Nothing -> return Nothing
+    typecheck (ExpPatternMatchCall e1 paramType returnType Pmes) = do 
+        e1t <- typecheck e1
+        gamma <- get 
+        case e1t == (just paramType) of
+            True -> do
+                
+
+            False -> return Nothing
