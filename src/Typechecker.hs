@@ -9,22 +9,25 @@ import Parser
 import Data.Map
 
 -- Type environment
-data Gamma = Gamma (Env, TldMap) deriving (Show)
+data Gamma = Gamma (Env, TldMap, TcDef, TcImp) deriving (Show)
 data Env = Env [(Identifier, Type)] deriving (Show)
 data TldMap = TldMap [(Type, [CDef])] deriving (Show)
+data TcDef = TcDef [(Identifier, [SignatureDef])] deriving (Show)
+data TcImp = TcImp [(Identifier, [SignatureImp])] deriving (Show)
+
 
 addEntryToEnv :: Identifier -> Type -> Gamma -> Gamma
-addEntryToEnv n t (Gamma (Env l, TldMap m)) = Gamma (Env (l ++ [(n,t)]), TldMap m)
+addEntryToEnv n t (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = Gamma (Env (l ++ [(n,t)]), TldMap m, TcDef td, TcImp ti)
 
 getType :: Identifier -> Gamma -> Maybe Type
-getType x (Gamma (Env l, _)) = do
+getType x (Gamma (Env l, _, _, _)) = do
     t <- lookup x gMap
     return t
     where
         gMap = fromList l
 
 getIdentifiers :: Type -> Gamma -> Maybe [CDef]
-getIdentifiers t (Gamma (_, TldMap m)) = do
+getIdentifiers t (Gamma (_, TldMap m, _, _)) = do
     [c] <- lookup t gMap
     return [c]
     where
