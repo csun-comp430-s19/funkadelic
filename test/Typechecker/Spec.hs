@@ -75,6 +75,20 @@ spec = do
             (evalState (typecheck (Func (FuncDefNullary (Identifier "anotherFunk") (ExpInteger 1234) (Type $ Identifier "Int")))) typeEnv)
                 `shouldBe` Just (Type (Identifier "Int"))
 
+            let tcDef = (TypeclassDef (Identifier "equals") [SigDef (Identifier "eq") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b")),SigDef (Identifier "neq") (Generic (GIdentifier "?c")) (Generic (GIdentifier "?d"))])
+
+            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [(Identifier "equals", [])], TcImp []))
+
+            -- anotherFunk is a string but typechecking it results in an int?
+            (evalState (typecheck tcDef) typeEnv)
+                `shouldBe` Nothing
+
+            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [], TcImp []))
+
+            -- anotherFunk is a string but typechecking it results in an int?
+            (evalState (typecheck tcDef) typeEnv)
+                `shouldBe` (Just (Type (Identifier "typeclass")))
+
         it "FAILS on bad typechecker input" $ do
             let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [], TcImp []))
             (evalState (typecheck (Func (FuncDefNullary (Identifier "anotherFunk") (ExpInteger 1234) (Type $ Identifier "String")))) typeEnv) 
@@ -84,4 +98,8 @@ spec = do
                 `shouldBe` Nothing
             let typeEnv = (Gamma (Env [(Identifier "function", mkType "String")], TldMap [], TcDef [], TcImp []))
             (evalState (typecheck (Func (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string"))))) typeEnv)
+                `shouldBe` Nothing
+            let tcDef = (TypeclassDef (Identifier "equals") [SigDef (Identifier "eq") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b")),SigDef (Identifier "neq") (Generic (GIdentifier "?c")) (Generic (GIdentifier "?d"))])
+            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [(Identifier "equals", [])], TcImp []))
+            (evalState (typecheck tcDef) typeEnv)
                 `shouldBe` Nothing
