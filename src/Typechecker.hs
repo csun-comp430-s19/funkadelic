@@ -8,6 +8,7 @@ import Prelude hiding (lookup, map)
 import Data.List hiding (lookup)
 import Parser
 import Data.Map hiding (map, findIndex, splitAt)
+import Data.Functor.Identity
 
 -- Type environment
 data Gamma = Gamma (Env, TldMap, TcDef, TcImp) deriving (Show)
@@ -105,14 +106,10 @@ tcImpSigExists (tcName, (SigImp sigName inType outType inputName body), gamma) =
 
 -- tcBodiesMatch :: (Identifier, SignatureImp, Gamma) -> State Gamma (Maybe Type)
 -- tcBodiesMatch (tcName, (SigImp sigName inType outType inputName body), gamma) = do
---     let actualType = typecheck body
---     case actualType of
---         Nothing -> return Nothing
---         Just x -> do
---             case (actualType == Just outType) of
---                 True -> return (Just outType)
---                 False -> return Nothing
-
+--     let Just actualType = typecheck body
+--     case (actualType == Just outType) of
+--         True -> return (Just outType)
+--         False -> return Nothing
 -- checkPme :: Type -> Type -> Identifier -> [Identifier] -> Exp -> Maybe Type
 -- checkPme pType rType cName _ e1 = do
 --     case (Just pType) == typecheck cName of
@@ -178,13 +175,22 @@ instance Typecheck Tld where
             False -> do
                 case anyExist of
                     Nothing -> do
+                        let agreeableList = map isAgreeable' defImps
                         case newGamma of
                             Nothing -> return Nothing
                             Just x -> do
                                 put $ x
                                 return $ Just (Type (Identifier "typeclassImp"))
                         return $ Just (Type (Identifier "typeclassImp"))
-                        where newGamma = insertTcImpsToGamma defName defImps gamma
+                        where        
+                            isAgreeable' (SigImp sigName inType outType inputName body) = do
+                                actualType <- typecheck body
+                                case actualType == Just outType of
+                                    True -> return True
+                                    False -> return False       
+                            newGamma = insertTcImpsToGamma defName defImps gamma
+                            -- gMap2 = fromList [(isAgree, True) | isAgree <- agreeableList]
+                            -- anyBad = lookup (Just False) gMap2
                     Just x -> return Nothing
                 where 
                     impExistList = map tcImpSigExists [(defName, imp, gamma) | imp <- defImps]

@@ -119,3 +119,10 @@ spec = do
             let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [], TcImp [(Identifier "equals", [SigImp (Identifier "eq") (Type (Identifier "String")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a"))])]))
             (evalState (typecheck tcImp) typeEnv)
                 `shouldBe` Nothing
+
+
+            let tcImp = (TypeclassImp (Identifier "equals") [SigImp (Identifier "eq") (Type (Identifier "Int")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a")),SigImp (Identifier "eq") (Type (Identifier "Int")) (Type (Identifier "Int")) (Identifier "b") (ExpIExp (IExp (IExpVar (Identifier "b")) Plus (IExpInt 1)))])
+            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [], TcImp []))
+            (evalState (typecheck tcImp) typeEnv)
+                `shouldBe` (Just (Type (Identifier "typeclassImp")))
+                -- BUG: does not check to see if tcDef exists, does not check to see if body matches out type
