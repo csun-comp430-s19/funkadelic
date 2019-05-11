@@ -91,12 +91,12 @@ spec = do
 
 
             let tcDef = (TypeclassDef (Identifier "equals") [SigDef (Identifier "eq") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b")),SigDef (Identifier "neq") (Generic (GIdentifier "?c")) (Generic (GIdentifier "?d"))])
-            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [(Identifier "equals", [SigDef (Identifier "lt") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b"))])], TcImp []))
+            let typeEnv = (Gamma (Env [], TldMap [], TcDef [(Identifier "equals", [SigDef (Identifier "lt") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b"))])], TcImp []))
             (evalState (typecheck tcDef) typeEnv)
                 `shouldBe` (Just (Type (Identifier "typeclass")))
 
             let tcImp = (TypeclassImp (Identifier "equals") [SigImp (Identifier "eq") (Type (Identifier "String")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a")),SigImp (Identifier "eq") (Type (Identifier "Int")) (Type (Identifier "Int")) (Identifier "b") (ExpIExp (IExp (IExpVar (Identifier "b")) Plus (IExpInt 1)))])
-            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [], TcImp []))
+            let typeEnv = (Gamma (Env [], TldMap [], TcDef [], TcImp []))
             (evalState (typecheck tcImp) typeEnv)
                 `shouldBe` (Just (Type (Identifier "typeclassImp")))
 
@@ -110,19 +110,20 @@ spec = do
             let typeEnv = (Gamma (Env [(Identifier "function", mkType "String")], TldMap [], TcDef [], TcImp []))
             (evalState (typecheck (Func (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string"))))) typeEnv)
                 `shouldBe` Nothing
+
             let tcDef = (TypeclassDef (Identifier "equals") [SigDef (Identifier "eq") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b")),SigDef (Identifier "neq") (Generic (GIdentifier "?c")) (Generic (GIdentifier "?d"))])
-            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [(Identifier "equals", [SigDef (Identifier "eq") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b"))])], TcImp []))
+            let typeEnv = (Gamma (Env [], TldMap [], TcDef [(Identifier "equals", [SigDef (Identifier "eq") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b"))])], TcImp []))
             (evalState (typecheck tcDef) typeEnv)
                 `shouldBe` Nothing
 
             let tcImp = (TypeclassImp (Identifier "equals") [SigImp (Identifier "eq") (Type (Identifier "String")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a")),SigImp (Identifier "eq") (Type (Identifier "Int")) (Type (Identifier "Int")) (Identifier "b") (ExpIExp (IExp (IExpVar (Identifier "b")) Plus (IExpInt 1)))])
-            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [], TcImp [(Identifier "equals", [SigImp (Identifier "eq") (Type (Identifier "String")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a"))])]))
+            let typeEnv = (Gamma (Env [], TldMap [], TcDef [], TcImp [(Identifier "equals", [SigImp (Identifier "eq") (Type (Identifier "String")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a"))])]))
             (evalState (typecheck tcImp) typeEnv)
                 `shouldBe` Nothing
 
 
             let tcImp = (TypeclassImp (Identifier "equals") [SigImp (Identifier "eq") (Type (Identifier "Int")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a")),SigImp (Identifier "eq") (Type (Identifier "Int")) (Type (Identifier "Int")) (Identifier "b") (ExpIExp (IExp (IExpVar (Identifier "b")) Plus (IExpInt 1)))])
-            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [], TcImp []))
+            let typeEnv = (Gamma (Env [], TldMap [], TcDef [], TcImp []))
             (evalState (typecheck tcImp) typeEnv)
-                `shouldBe` (Just (Type (Identifier "typeclassImp")))
-                -- BUG: does not check to see if tcDef exists, does not check to see if body matches out type
+                `shouldBe` Nothing
+                -- BUG: does not check to see if tcDef exists

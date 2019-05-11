@@ -104,13 +104,6 @@ tcImpSigExists (tcName, (SigImp sigName inType outType inputName body), gamma) =
         tcImps = getTcImpIdentifiers tcName gamma
         tcDefs = getTcDefIdentifiers tcName gamma
 
--- tcBodiesMatch :: (Identifier, SignatureImp, Gamma) -> State Gamma (Maybe Type)
--- tcBodiesMatch (tcName, (SigImp sigName inType outType inputName body), gamma) = do
---     let Just actualType = typecheck body
---     case (actualType == Just outType) of
---         True -> return (Just outType)
---         False -> return Nothing
-
 -- checkPme :: Type -> Type -> Identifier -> [Identifier] -> Exp -> Maybe Type
 -- checkPme pType rType cName _ e1 = do
 --     case (Just pType) == typecheck cName of
@@ -166,13 +159,31 @@ instance Typecheck Tld where
                     sigExistList = map tcDefSigExists [(defName, sig, gamma) | sig <- defSigs]
                     gMap = fromList [(sigExist, True) | sigExist <- sigExistList]
                     anyExist = lookup (Just True) gMap
+
+
+
     typecheck (TypeclassImp defName defImps) = do
         gamma <- get
         case getTcImpIdentifiers defName gamma == Nothing of
             True -> do
-                gamma <- get
-                _ <- put $ addTcImpToGamma defName defImps gamma
-                return $ Just (Type (Identifier "typeclassImp"))
+                case anyBad of
+                    Nothing -> do
+                        case newGamma of 
+                            Nothing -> return Nothing
+                            Just x -> do
+                                put $ x
+                                return $ Just (Type (Identifier "typeclassImp"))
+                        where 
+                            newGamma = insertTcImpsToGamma defName defImps gamma
+                    Just x -> return Nothing
+                where        
+                    isAgreeable' (SigImp sigName inType outType inputName body) = do
+                        case fst (runState (typecheck body) gamma) of
+                            Nothing -> return False
+                            Just x -> return (outType == x)
+                    agreeableList = map isAgreeable' defImps       
+                    gMap2 = fromList [(isAgree, True) | isAgree <- agreeableList]
+                    anyBad = lookup (Just False) gMap2
             False -> do
                 case anyExist of
                     Nothing -> do
@@ -185,8 +196,7 @@ instance Typecheck Tld where
                                         return $ Just (Type (Identifier "typeclassImp"))
                                 where 
                                     newGamma = insertTcImpsToGamma defName defImps gamma
-                            Just x -> return Nothing
-                        return $ Just (Type (Identifier "typeclassImp"))
+                            Just x -> return Nothing -- found entry where not (outtype == bodytype)
                         where        
                             isAgreeable' (SigImp sigName inType outType inputName body) = do
                                 case fst (runState (typecheck body) gamma) of
@@ -194,7 +204,7 @@ instance Typecheck Tld where
                                     Just x -> return (outType == x)
                             agreeableList = map isAgreeable' defImps       
                             gMap2 = fromList [(isAgree, True) | isAgree <- agreeableList]
-                            anyBad = lookup (Nothing) gMap2
+                            anyBad = lookup (Just False) gMap2
                     Just x -> return Nothing
                 where 
                     impExistList = map tcImpSigExists [(defName, imp, gamma) | imp <- defImps]
