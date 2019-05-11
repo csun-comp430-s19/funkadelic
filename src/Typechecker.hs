@@ -110,6 +110,7 @@ tcImpSigExists (tcName, (SigImp sigName inType outType inputName body), gamma) =
 --     case (actualType == Just outType) of
 --         True -> return (Just outType)
 --         False -> return Nothing
+
 -- checkPme :: Type -> Type -> Identifier -> [Identifier] -> Exp -> Maybe Type
 -- checkPme pType rType cName _ e1 = do
 --     case (Just pType) == typecheck cName of
@@ -175,22 +176,25 @@ instance Typecheck Tld where
             False -> do
                 case anyExist of
                     Nothing -> do
-                        let agreeableList = map isAgreeable' defImps
-                        case newGamma of
-                            Nothing -> return Nothing
-                            Just x -> do
-                                put $ x
-                                return $ Just (Type (Identifier "typeclassImp"))
+                        case anyBad of
+                            Nothing -> do
+                                case newGamma of 
+                                    Nothing -> return Nothing
+                                    Just x -> do
+                                        put $ x
+                                        return $ Just (Type (Identifier "typeclassImp"))
+                                where 
+                                    newGamma = insertTcImpsToGamma defName defImps gamma
+                            Just x -> return Nothing
                         return $ Just (Type (Identifier "typeclassImp"))
                         where        
                             isAgreeable' (SigImp sigName inType outType inputName body) = do
-                                actualType <- typecheck body
-                                case actualType == Just outType of
-                                    True -> return True
-                                    False -> return False       
-                            newGamma = insertTcImpsToGamma defName defImps gamma
-                            -- gMap2 = fromList [(isAgree, True) | isAgree <- agreeableList]
-                            -- anyBad = lookup (Just False) gMap2
+                                case fst (runState (typecheck body) gamma) of
+                                    Nothing -> return False
+                                    Just x -> return (outType == x)
+                            agreeableList = map isAgreeable' defImps       
+                            gMap2 = fromList [(isAgree, True) | isAgree <- agreeableList]
+                            anyBad = lookup (Nothing) gMap2
                     Just x -> return Nothing
                 where 
                     impExistList = map tcImpSigExists [(defName, imp, gamma) | imp <- defImps]
