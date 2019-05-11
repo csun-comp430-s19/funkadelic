@@ -50,6 +50,13 @@ getTcImpIdentifiers tc (Gamma (_, _, _, TcImp ti)) = do
     where
         gMap = fromList ti
 
+tcDefSigExists :: SignatureDef -> Gamma -> Bool
+tcDefSigExists sigDef (Gamma (_, _, _, TcImp ti)) =  do 
+    exists <- lookup sigDef gMap
+    return (exists == Nothing)
+    where
+        gMap = fromList ti
+
 
 -- checkPme :: Type -> Type -> Identifier -> [Identifier] -> Exp -> Maybe Type
 -- checkPme pType rType cName _ e1 = do
