@@ -4,7 +4,8 @@ module Typechecker where
 import Control.Monad.State.Lazy
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Maybe
-import Prelude hiding (lookup)
+import Prelude hiding (lookup, map)
+import Data.List hiding (lookup, map)
 import Parser
 import Data.Map
 
@@ -50,13 +51,16 @@ getTcImpIdentifiers tc (Gamma (_, _, _, TcImp ti)) = do
     where
         gMap = fromList ti
 
-tcDefSigExists :: SignatureDef -> Gamma -> Bool
-tcDefSigExists sigDef (Gamma (_, _, _, TcImp ti)) =  do 
-    exists <- lookup sigDef gMap
-    return (exists == Nothing)
-    where
-        gMap = fromList ti
-
+tcDefSigExists :: Identifier -> SignatureDef -> Gamma -> Maybe Bool
+tcDefSigExists tcName sigDef gamma =  do
+    case tcDefs of
+        Nothing -> return False
+        Just x -> do
+            case find (==sigDef) x of
+                Nothing -> return False
+                Just x -> return True
+    where 
+        tcDefs = getTcDefIdentifiers tcName gamma
 
 -- checkPme :: Type -> Type -> Identifier -> [Identifier] -> Exp -> Maybe Type
 -- checkPme pType rType cName _ e1 = do
