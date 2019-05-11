@@ -81,7 +81,7 @@ spec = do
 
             -- anotherFunk is a string but typechecking it results in an int?
             (evalState (typecheck tcDef) typeEnv)
-                `shouldBe` Nothing
+                `shouldBe` Just (Type (Identifier "typeclass"))
 
             let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [], TcImp []))
 
@@ -100,6 +100,6 @@ spec = do
             (evalState (typecheck (Func (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string"))))) typeEnv)
                 `shouldBe` Nothing
             let tcDef = (TypeclassDef (Identifier "equals") [SigDef (Identifier "eq") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b")),SigDef (Identifier "neq") (Generic (GIdentifier "?c")) (Generic (GIdentifier "?d"))])
-            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [(Identifier "equals", [])], TcImp []))
+            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [(Identifier "equals", [SigDef (Identifier "eq") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b"))])], TcImp []))
             (evalState (typecheck tcDef) typeEnv)
                 `shouldBe` Nothing

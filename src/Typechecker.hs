@@ -5,9 +5,9 @@ import Control.Monad.State.Lazy
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Maybe
 import Prelude hiding (lookup, map)
-import Data.List hiding (lookup, map)
+import Data.List hiding (lookup)
 import Parser
-import Data.Map
+import Data.Map hiding (map)
 
 -- Type environment
 data Gamma = Gamma (Env, TldMap, TcDef, TcImp) deriving (Show)
@@ -51,8 +51,8 @@ getTcImpIdentifiers tc (Gamma (_, _, _, TcImp ti)) = do
     where
         gMap = fromList ti
 
-tcDefSigExists :: Identifier -> SignatureDef -> Gamma -> Maybe Bool
-tcDefSigExists tcName sigDef gamma =  do
+tcDefSigExists :: (Identifier, SignatureDef, Gamma) -> Maybe Bool
+tcDefSigExists (tcName, sigDef, gamma) =  do
     case tcDefs of
         Nothing -> return False
         Just x -> do
@@ -102,11 +102,16 @@ instance Typecheck Tld where
                 gamma <- get
                 _ <- put $ addTcDefToGamma defName defSigs gamma
                 return $ Just (Type (Identifier "typeclass"))
-            False -> return Nothing
-            -- TODO: check to see if sig each sig in defSigs is not in existingSigs
-
-
-    
+            False -> do
+                case anyExist of
+                    Nothing -> do
+                        _ <- put $ addTcDefToGamma defName defSigs gamma
+                        return $ Just (Type (Identifier "typeclass"))
+                    Just x -> return Nothing
+                where 
+                    sigExistList = map tcDefSigExists [(defName, sig, gamma) | sig <- defSigs]
+                    gMap = fromList [(sigExist, True) | sigExist <- sigExistList]
+                    anyExist = lookup (Just True) gMap
 
 
 instance Typecheck IExp where
