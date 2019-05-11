@@ -81,23 +81,37 @@ tcDefSigExists (tcName, sigDef, gamma) =  do
     where 
         tcDefs = getTcDefIdentifiers tcName gamma
 
+getSigDefName :: SignatureDef -> (Identifier, Bool)
+getSigDefName (SigDef name g1 g2) = (name, True)
+    
 tcImpSigExists :: (Identifier, SignatureImp, Gamma) -> Maybe Bool
-tcImpSigExists (tcName, sigImp, gamma) =  do
-    case tcImps of
-        Nothing -> return False
+tcImpSigExists (tcName, (SigImp sigName inType outType inputName body), gamma) =  do
+    case tcDefs of 
+        Nothing -> return True -- We return a reject if typeclass has no signatures
         Just x -> do
-            case find (==sigImp) x of
-                Nothing -> return False
-                Just x -> return True
+            case lookup sigName gMap of
+                Nothing -> return True
+                Just x -> do
+                    case tcImps of
+                        Nothing -> return False
+                        Just y -> do
+                            case find (==(SigImp sigName inType outType inputName body)) y of
+                                Nothing -> return False
+                                Just y -> return True
+            where gMap = fromList (map getSigDefName x)
     where 
         tcImps = getTcImpIdentifiers tcName gamma
+        tcDefs = getTcDefIdentifiers tcName gamma
 
-tcBodiesMatch :: (Identifier, SignatureImp, Gamma) -> Maybe Bool
-tcBodiesMatch (tcName, (SigImp sigName inType outType inputName body), gamma) = do
-    actualType <- typecheck body
-    case actualType == Just outType of
-            True -> return True
-            False -> return False
+-- tcBodiesMatch :: (Identifier, SignatureImp, Gamma) -> State Gamma (Maybe Type)
+-- tcBodiesMatch (tcName, (SigImp sigName inType outType inputName body), gamma) = do
+--     let actualType = typecheck body
+--     case actualType of
+--         Nothing -> return Nothing
+--         Just x -> do
+--             case (actualType == Just outType) of
+--                 True -> return (Just outType)
+--                 False -> return Nothing
 
 -- checkPme :: Type -> Type -> Identifier -> [Identifier] -> Exp -> Maybe Type
 -- checkPme pType rType cName _ e1 = do
