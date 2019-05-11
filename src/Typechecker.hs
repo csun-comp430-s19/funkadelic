@@ -7,7 +7,7 @@ import Control.Monad.Trans.Maybe
 import Prelude hiding (lookup, map)
 import Data.List hiding (lookup)
 import Parser
-import Data.Map hiding (map)
+import Data.Map hiding (map, findIndex, splitAt)
 
 -- Type environment
 data Gamma = Gamma (Env, TldMap, TcDef, TcImp) deriving (Show)
@@ -22,6 +22,15 @@ addEntryToEnv n t (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = Gamma (Env (l 
 
 addTcDefToGamma :: Identifier -> [SignatureDef] -> Gamma -> Gamma
 addTcDefToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = Gamma (Env l, TldMap m, TcDef (td ++ [(n, s)]), TcImp ti)
+
+insertTcDefsToGamma :: Identifier -> [SignatureDef] -> Gamma -> Maybe Gamma
+insertTcDefsToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = do
+    index <- findIndex (==n) [name | (name, sigs) <- td]
+    let newTcDef = (n, ([sigs | (name, sigs) <- td] !! index ++ s))
+    let (x,_:ys) = splitAt index td
+    let newTd = x ++ newTcDef : ys
+    return (Gamma (Env l, TldMap m, TcDef newTd, TcImp ti))
+
 
 getType :: Identifier -> Gamma -> Maybe Type
 getType x (Gamma (Env l, _, _, _)) = do
@@ -105,8 +114,13 @@ instance Typecheck Tld where
             False -> do
                 case anyExist of
                     Nothing -> do
-                        _ <- put $ addTcDefToGamma defName defSigs gamma
+                        case newGamma of
+                            Nothing -> return Nothing
+                            Just x -> do
+                                put $ x
+                                return $ Just (Type (Identifier "typeclass"))
                         return $ Just (Type (Identifier "typeclass"))
+                        where newGamma = insertTcDefsToGamma defName defSigs gamma
                     Just x -> return Nothing
                 where 
                     sigExistList = map tcDefSigExists [(defName, sig, gamma) | sig <- defSigs]
