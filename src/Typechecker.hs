@@ -92,6 +92,13 @@ tcImpSigExists (tcName, sigImp, gamma) =  do
     where 
         tcImps = getTcImpIdentifiers tcName gamma
 
+tcBodiesMatch :: (Identifier, SignatureImp, Gamma) -> Maybe Bool
+tcBodiesMatch (tcName, (SigImp sigName inType outType inputName body), gamma) = do
+    actualType <- typecheck body
+    case actualType == Just outType of
+            True -> return True
+            False -> return False
+
 -- checkPme :: Type -> Type -> Identifier -> [Identifier] -> Exp -> Maybe Type
 -- checkPme pType rType cName _ e1 = do
 --     case (Just pType) == typecheck cName of
