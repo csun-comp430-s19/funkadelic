@@ -23,6 +23,9 @@ addEntryToEnv n t (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = Gamma (Env (l 
 addTcDefToGamma :: Identifier -> [SignatureDef] -> Gamma -> Gamma
 addTcDefToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = Gamma (Env l, TldMap m, TcDef (td ++ [(n, s)]), TcImp ti)
 
+addTcImpToGamma :: Identifier -> [SignatureImp] -> Gamma -> Gamma
+addTcImpToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = Gamma (Env l, TldMap m, TcDef td, TcImp (ti ++ [(n, s)]))
+
 insertTcDefsToGamma :: Identifier -> [SignatureDef] -> Gamma -> Maybe Gamma
 insertTcDefsToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = do
     index <- findIndex (==n) [name | (name, sigs) <- td]
@@ -31,6 +34,13 @@ insertTcDefsToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = do
     let newTd = x ++ newTcDef : ys
     return (Gamma (Env l, TldMap m, TcDef newTd, TcImp ti))
 
+insertTcImpsToGamma :: Identifier -> [SignatureImp] -> Gamma -> Maybe Gamma
+insertTcImpsToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = do
+    index <- findIndex (==n) [name | (name, imps) <- ti]
+    let newTcImps = (n, ([imps | (name, imps) <- ti] !! index ++ s))
+    let (x,_:ys) = splitAt index ti
+    let newTi = x ++ newTcImps : ys
+    return (Gamma (Env l, TldMap m, TcDef td, TcImp newTi))
 
 getType :: Identifier -> Gamma -> Maybe Type
 getType x (Gamma (Env l, _, _, _)) = do
@@ -70,6 +80,17 @@ tcDefSigExists (tcName, sigDef, gamma) =  do
                 Just x -> return True
     where 
         tcDefs = getTcDefIdentifiers tcName gamma
+
+tcImpSigExists :: (Identifier, SignatureImp, Gamma) -> Maybe Bool
+tcImpSigExists (tcName, sigImp, gamma) =  do
+    case tcImps of
+        Nothing -> return False
+        Just x -> do
+            case find (==sigImp) x of
+                Nothing -> return False
+                Just x -> return True
+    where 
+        tcImps = getTcImpIdentifiers tcName gamma
 
 -- checkPme :: Type -> Type -> Identifier -> [Identifier] -> Exp -> Maybe Type
 -- checkPme pType rType cName _ e1 = do
@@ -126,7 +147,28 @@ instance Typecheck Tld where
                     sigExistList = map tcDefSigExists [(defName, sig, gamma) | sig <- defSigs]
                     gMap = fromList [(sigExist, True) | sigExist <- sigExistList]
                     anyExist = lookup (Just True) gMap
-
+    typecheck (TypeclassImp defName defImps) = do
+        gamma <- get
+        case getTcImpIdentifiers defName gamma == Nothing of
+            True -> do
+                gamma <- get
+                _ <- put $ addTcImpToGamma defName defImps gamma
+                return $ Just (Type (Identifier "typeclassImp"))
+            False -> do
+                case anyExist of
+                    Nothing -> do
+                        case newGamma of
+                            Nothing -> return Nothing
+                            Just x -> do
+                                put $ x
+                                return $ Just (Type (Identifier "typeclassImp"))
+                        return $ Just (Type (Identifier "typeclassImp"))
+                        where newGamma = insertTcImpsToGamma defName defImps gamma
+                    Just x -> return Nothing
+                where 
+                    impExistList = map tcImpSigExists [(defName, imp, gamma) | imp <- defImps]
+                    gMap = fromList [(impExist, True) | impExist <- impExistList]
+                    anyExist = lookup (Just True) gMap
 
 instance Typecheck IExp where
     typecheck (IExpVar id) = do

@@ -95,6 +95,11 @@ spec = do
             (evalState (typecheck tcDef) typeEnv)
                 `shouldBe` (Just (Type (Identifier "typeclass")))
 
+            let tcImp = (TypeclassImp (Identifier "equals") [SigImp (Identifier "eq") (Type (Identifier "String")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a")),SigImp (Identifier "eq") (Type (Identifier "Int")) (Type (Identifier "Int")) (Identifier "b") (ExpIExp (IExp (IExpVar (Identifier "b")) Plus (IExpInt 1)))])
+            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [], TcImp []))
+            (evalState (typecheck tcImp) typeEnv)
+                `shouldBe` (Just (Type (Identifier "typeclassImp")))
+
         it "FAILS on bad typechecker input" $ do
             let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [], TcImp []))
             (evalState (typecheck (Func (FuncDefNullary (Identifier "anotherFunk") (ExpInteger 1234) (Type $ Identifier "String")))) typeEnv) 
@@ -108,4 +113,9 @@ spec = do
             let tcDef = (TypeclassDef (Identifier "equals") [SigDef (Identifier "eq") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b")),SigDef (Identifier "neq") (Generic (GIdentifier "?c")) (Generic (GIdentifier "?d"))])
             let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [(Identifier "equals", [SigDef (Identifier "eq") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b"))])], TcImp []))
             (evalState (typecheck tcDef) typeEnv)
+                `shouldBe` Nothing
+
+            let tcImp = (TypeclassImp (Identifier "equals") [SigImp (Identifier "eq") (Type (Identifier "String")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a")),SigImp (Identifier "eq") (Type (Identifier "Int")) (Type (Identifier "Int")) (Identifier "b") (ExpIExp (IExp (IExpVar (Identifier "b")) Plus (IExpInt 1)))])
+            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [], TcImp [(Identifier "equals", [SigImp (Identifier "eq") (Type (Identifier "String")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a"))])]))
+            (evalState (typecheck tcImp) typeEnv)
                 `shouldBe` Nothing
