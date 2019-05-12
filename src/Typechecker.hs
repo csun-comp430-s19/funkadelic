@@ -29,19 +29,25 @@ addTcImpToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = Gamma (Env l
 
 insertTcDefsToGamma :: Identifier -> [SignatureDef] -> Gamma -> Maybe Gamma
 insertTcDefsToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = do
-    index <- findIndex (==n) [name | (name, sigs) <- td]
-    let newTcDef = (n, ([sigs | (name, sigs) <- td] !! index ++ s))
-    let (x,_:ys) = splitAt index td
-    let newTd = x ++ newTcDef : ys
-    return (Gamma (Env l, TldMap m, TcDef newTd, TcImp ti))
+    case td == [] of
+        True -> return (Gamma (Env l, TldMap m, TcDef [(n, s)], TcImp ti))
+        False -> do
+            index <- findIndex (==n) [name | (name, sigs) <- td]
+            let newTcDef = (n, ([sigs | (name, sigs) <- td] !! index ++ s))
+            let (x,_:ys) = splitAt index td
+            let newTd = x ++ newTcDef : ys
+            return (Gamma (Env l, TldMap m, TcDef newTd, TcImp ti))
 
 insertTcImpsToGamma :: Identifier -> [SignatureImp] -> Gamma -> Maybe Gamma
 insertTcImpsToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = do
-    index <- findIndex (==n) [name | (name, imps) <- ti]
-    let newTcImps = (n, ([imps | (name, imps) <- ti] !! index ++ s))
-    let (x,_:ys) = splitAt index ti
-    let newTi = x ++ newTcImps : ys
-    return (Gamma (Env l, TldMap m, TcDef td, TcImp newTi))
+    case ti == [] of
+        True -> return (Gamma (Env l, TldMap m, TcDef td, TcImp [(n, s)]))
+        False -> do
+            index <- findIndex (==n) [name | (name, imps) <- ti]
+            let newTcImps = (n, ([imps | (name, imps) <- ti] !! index ++ s))
+            let (x,_:ys) = splitAt index ti
+            let newTi = x ++ newTcImps : ys
+            return (Gamma (Env l, TldMap m, TcDef td, TcImp newTi))
 
 getType :: Identifier -> Gamma -> Maybe Type
 getType x (Gamma (Env l, _, _, _)) = do
@@ -104,8 +110,7 @@ tcImpGood (tcName, (SigImp sigName inType outType inputName body), gamma) =  do
                                 Just imps -> do
                                     case find (==(sigName, inType, outType)) impNameTypes of
                                         Nothing -> return True
-                                        Just foundImp -> return False -- found the implementation already so send false
-                                        -- need to check in and out types, not whole SigImp
+                                        Just foundImp -> return False -- found the implementation so send false
                                     where 
                                         impNameTypes = map getSigImpNameTypes imps
                     where sigNames = fromList (map getSigDefName defs)
@@ -161,8 +166,8 @@ instance Typecheck Tld where
                             Just x -> do
                                 put $ x
                                 return $ Just (Type (Identifier "typeclass"))
-                        return $ Just (Type (Identifier "typeclass"))
-                        where newGamma = insertTcDefsToGamma defName defSigs gamma
+                        where 
+                            newGamma = insertTcDefsToGamma defName defSigs gamma
                     Just x -> return Nothing
                 where 
                     sigExistList = map tcDefSigExists [(defName, sig, gamma) | sig <- defSigs]
