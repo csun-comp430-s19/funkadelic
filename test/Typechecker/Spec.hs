@@ -125,4 +125,8 @@ spec = do
             let typeEnv = (Gamma (Env [], TldMap [], TcDef [], TcImp []))
             (evalState (typecheck tcImp) typeEnv)
                 `shouldBe` Nothing
-                -- BUG: does not check to see if tcDef exists
+
+            let tcImp = (TypeclassImp (Identifier "equals") [SigImp (Identifier "eq") (Type (Identifier "String")) (Type (Identifier "Int")) (Identifier "a") (ExpInteger 1)])
+            let typeEnv = (Gamma (Env [], TldMap [], TcDef [(Identifier "equals", [SigDef (Identifier "eq") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b"))])], TcImp [(Identifier "equals", [SigImp (Identifier "eq") (Type (Identifier "String")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a"))])]))
+            (evalState (typecheck tcImp) typeEnv)
+                `shouldBe` Nothing
