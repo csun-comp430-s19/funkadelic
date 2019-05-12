@@ -14,7 +14,7 @@ data Env = Env [(Identifier, Type)] deriving (Show)
 data TldMap = TldMap [(Type, [CDef])] deriving (Show)
 
 addEntryToEnv :: Identifier -> Type -> Gamma -> Gamma
-addEntryToEnv n t (Gamma (Env l, TldMap m)) = Gamma (Env (l ++ [(n,t)]), TldMap m)
+addEntryToEnv n t (Gamma (Env l, TldMap m)) =_ Gamma (Env (l ++ [(n,t)]), TldMap m)
 
 getType :: Identifier -> Gamma -> Maybe Type
 getType x (Gamma (Env l, _)) = do
@@ -29,6 +29,30 @@ getIdentifiers t (Gamma (_, TldMap m)) = do
     return [c]
     where
         gMap = fromList m
+
+getTypesFromPme :: Pme -> Cdef -> Maybe Type
+getTypesFromPme (PatternMatchExpression a [_] _) (UnaryConstructor i _)  = do
+    gamma <- get
+    case getType i gamma of
+        (Just (Type (Identifier t1))) -> do
+            case getType a gamma of
+                (Just (Type (Identifier t2)) -> do
+                    case t2 == t1 of
+                        True -> return Just (Type (Identifier t2))
+                        False -> return Nothing
+                Nothing -> return Nothing
+        Nothing -> return Nothing
+getTypesFromPme (PatternMatchExpression a [_] _) (NullaryConstructor i)  = do
+    gamma <- get
+    case getType i gamma of
+        (Just (Type (Identifier t1))) -> do
+            case getType a gamma of
+                (Just (Type (Identifier t2)) -> do
+                    case t2 == t1 of
+                        True -> return Just (Type (Identifier t2))
+                        False -> return Nothing
+                Nothing -> return Nothing
+        Nothing -> return Nothing
 
 
 -- checkPme :: Type -> Type -> Identifier -> [Identifier] -> Exp -> Maybe Type
@@ -104,11 +128,14 @@ instance Typecheck Exp where
         case getType fName gamma of
             Just t -> return (Just t)
             Nothing -> return Nothing
-    -- typecheck (ExpPatternMatchCall e1 paramType returnType Pmes) = do 
-    --     e1t <- typecheck e1
-    --     gamma <- get 
-    --     case e1t == (just paramType) of
-    --         True -> do
-                
-
-    --         False -> return Nothing
+    typecheck (ExpPatternMatchCall e1 paramType returnType pmes) = do 
+        e1t <- typecheck e1
+        gamma <- get 
+        case e1t == (just paramType) of
+            True -> do
+                case getIdentifiers paramType gamma of
+                    Just [construct] -> do
+                        [matchingType] <- zipwith getConstructorsFromPme pmes [construct]
+                         
+                    Nothing -> return Nothing
+            False -> return Nothing
