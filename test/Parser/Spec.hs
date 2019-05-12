@@ -55,6 +55,7 @@ spec = do
             parseExp "case 12:Integer of:String name()->\"xyz\"other()->\"abc\"" `shouldBe` (Right (ExpPatternMatchCall (ExpInteger 12) (Type $ Identifier "Integer") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [] (ExpString "xyz"), PatternMatchExpression (Identifier "other") [] (ExpString "abc")] ))
             parseExp "case 12:Integer of:String name(thing)->\"xyz\"" `shouldBe` (Right (ExpPatternMatchCall (ExpInteger 12) (Type $ Identifier "Integer") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [Identifier "thing"] (ExpString "xyz")] ))
             parseExp "case 12:Integer of:String name(thing,other)->\"xyz\"" `shouldBe` (Right (ExpPatternMatchCall (ExpInteger 12) (Type $ Identifier "Integer") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [Identifier "thing", Identifier "other"] (ExpString "xyz")] ))
+            parseExp "<1,2,3,4>" `shouldBe` (Right (ExpProduct [ExpInteger 1, ExpInteger 2, ExpInteger 3, ExpInteger 4]))
 
         it "FAILS on bad parser input" $ do
             (getRight $ parseExp "2a") `shouldBe` Nothing
