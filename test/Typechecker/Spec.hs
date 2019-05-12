@@ -51,6 +51,8 @@ spec = do
             (evalState (typecheck (ExpUnaryFOCall (Identifier "name") (ExpVariable $ Identifier "x"))) typeEnv) `shouldBe` stringType
             let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "name", mkType "Int")], TldMap [], TcDef [], TcImp []))
             (evalState (typecheck (ExpNullaryFOCall (Identifier "name"))) typeEnv) `shouldBe` intType
+            let typeEnv = (Gamma (Env [], TldMap [], TcDef [],  TcImp [(Identifier "add", [SigImp (Identifier "addOne") (Type (Identifier "Int")) (Type (Identifier "Int")) (Identifier "a") (ExpInteger 1)])]))
+            (evalState (typecheck (TypeclassCallInt (ExpAtomInt 5) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne")))) typeEnv) `shouldBe` intType
 
         it "FAILS on bad typechecker input" $ do
             let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int")], TldMap [], TcDef [], TcImp []))

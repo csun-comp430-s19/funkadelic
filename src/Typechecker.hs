@@ -56,6 +56,31 @@ getType x (Gamma (Env l, _, _, _)) = do
     where
         gMap = fromList l
 
+getImpType :: Identifier -> Identifier -> Type -> Gamma -> Maybe (Maybe Type)
+getImpType tcn tcf i (Gamma (_, _, _, TcImp ti)) = do
+    let gMap = fromList ti
+    let tcImps = lookup tcn gMap
+    case tcImps of
+        Nothing -> return Nothing
+        Just imps -> do
+            case lookup (tcf, i) gMap2 of
+                Nothing -> return Nothing
+                Just foundOut -> return (Just foundOut)
+            where
+                gMap2 = fromList (map getSigImpNameInOut imps)
+
+
+    -- case lookup tcn gMap of
+    --     Nothing -> return Nothing
+    --     Just imps -> do
+    --         case lookup (tcf, i) impNameTypes of
+    --             Nothing -> return Nothing
+    --             Just foundOut -> return foundOut
+    --         where 
+    --             impNameTypes = map getSigImpNameInOut imps
+    -- where
+    --     gMap = fromList ti
+
 getIdentifiers :: Type -> Gamma -> Maybe [CDef]
 getIdentifiers t (Gamma (_, TldMap m, _, _)) = do
     c <- lookup t gMap
@@ -93,6 +118,9 @@ getSigDefName (SigDef name g1 g2) = (name, True)
 
 getSigImpNameIn :: SignatureImp -> (Identifier, Type)
 getSigImpNameIn (SigImp sigName inType outType inputName body) = (sigName, inType)
+
+getSigImpNameInOut :: SignatureImp -> ((Identifier, Type), Type)
+getSigImpNameInOut (SigImp sigName inType outType inputName body) = ((sigName, inType), (outType))
     
 tcImpGood :: (Identifier, SignatureImp, Gamma) -> Maybe Bool
 tcImpGood (tcName, (SigImp sigName inType outType inputName body), gamma) =  do
@@ -103,7 +131,7 @@ tcImpGood (tcName, (SigImp sigName inType outType inputName body), gamma) =  do
                 True -> return False
                 False -> do
                     case lookup sigName sigNames of
-                        Nothing -> return False -- Does NOT have an sig def
+                        Nothing -> return False -- Does NOT have a sig def
                         Just x -> do
                             case tcImps of
                                 Nothing -> return True -- Does NOT have any sig imps
@@ -241,6 +269,15 @@ instance Typecheck Exp where
         case getType fName gamma of
             Just t -> return (Just t)
             Nothing -> return Nothing
+    typecheck (TypeclassCallInt (ExpAtomInt _) (Typeclass tc) (TypeclassFunc tcfun)) = do
+        gamma <- get
+        case getImpType tc tcfun (mkType "Int") gamma of
+            Just s -> do
+                case s of
+                    Nothing -> return Nothing
+                    Just t -> return (Just t)
+            Nothing -> return Nothing
+
     -- typecheck (ExpPatternMatchCall e1 paramType returnType Pmes) = do 
     --     e1t <- typecheck e1
     --     gamma <- get 
