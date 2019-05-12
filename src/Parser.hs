@@ -27,6 +27,10 @@ newtype GIdentifier = GIdentifier String deriving (Show, Eq, Ord)
 
 newtype Generic = Generic GIdentifier deriving (Show, Eq)
 
+data Typeclass = Typeclass Identifier deriving (Show, Eq, Ord)
+
+data TypeclassFunc = TypeclassFunc Identifier deriving (Show, Eq, Ord)
+
 -- iBinaryOperator type
 -- Create a type for all possible binary operations
 -- ⊗∃IBinOp ::= “+” | “-” | “*” | “/” | “**” | “==”
@@ -81,6 +85,12 @@ data IExp =
     |   IExp IExp IBinOp IExp 
     deriving (Show, Eq)
 
+data ExpAtom =
+        ExpAtomVar Identifier
+    |   ExpAtomInt Integer
+    |   ExpAtomStr String
+    deriving (Show, Eq)
+
 -- Expression type
 -- exp∃Expression ::= x | i | s | ie | \(exp){exp}:τ | name(exp)
 data Exp = 
@@ -94,6 +104,9 @@ data Exp =
     |   ExpUnaryFOCall Identifier Exp
     |   ExpNullaryFOCall Identifier
     |   ExpPatternMatchCall Exp Type Type [Pme]
+    |   TypeclassCallVar ExpAtom Typeclass TypeclassFunc -- varName tcName tcFuncName
+    |   TypeclassCallInt ExpAtom Typeclass TypeclassFunc -- varName tcName tcFuncName
+    |   TypeclassCallStr ExpAtom Typeclass TypeclassFunc -- varName tcName tcFuncName
     deriving (Show, Eq)
 
 data Pme =
@@ -186,6 +199,9 @@ expParser =
     <|> try nullaryFOCall
     <|> try lambda
     <|> try patternMatchCall
+    <|> try tCallVar
+    <|> try tCallInt
+    <|> try tCallStr
     <|> ExpIExp <$> (try iExpTerm)
     <|> expAtom
 
@@ -271,6 +287,33 @@ tImp = do
     _ <- char ':'
     sigs <- many1 sigImpParser
     return $ TypeclassImp typeclass sigs
+
+tCallVar :: Parser Exp
+tCallVar = do
+    var <- ExpAtomVar <$> identifier
+    _ <- string "->"
+    tc <- Typeclass <$> identifier -- existing typeclass name
+    _ <- string "::"
+    tcFunc <- TypeclassFunc <$> identifier
+    return $ TypeclassCallVar var tc tcFunc
+
+tCallInt :: Parser Exp
+tCallInt = do
+    int <- ExpAtomInt <$> integer
+    _ <- string "->"
+    tc <- Typeclass <$> identifier -- existing typeclass name
+    _ <- string "::"
+    tcFunc <- TypeclassFunc <$> identifier
+    return $ TypeclassCallInt int tc tcFunc
+
+tCallStr :: Parser Exp
+tCallStr = do
+    str <- ExpAtomStr <$> string'
+    _ <- string "->"
+    tc <- Typeclass <$> identifier -- existing typeclass name
+    _ <- string "::"
+    tcFunc <- TypeclassFunc <$> identifier
+    return $ TypeclassCallStr str tc tcFunc
 
 
 -- Extract the name and parameter name & type, return type, and expression
