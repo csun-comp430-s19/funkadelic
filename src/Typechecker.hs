@@ -84,6 +84,9 @@ tcDefSigExists (tcName, sigDef, gamma) =  do
 
 getSigDefName :: SignatureDef -> (Identifier, Bool)
 getSigDefName (SigDef name g1 g2) = (name, True)
+
+getSigImpNameTypes :: SignatureImp -> (Identifier, Type, Type)
+getSigImpNameTypes (SigImp sigName inType outType inputName body) = (sigName, inType, outType)
     
 tcImpGood :: (Identifier, SignatureImp, Gamma) -> Maybe Bool
 tcImpGood (tcName, (SigImp sigName inType outType inputName body), gamma) =  do
@@ -99,10 +102,12 @@ tcImpGood (tcName, (SigImp sigName inType outType inputName body), gamma) =  do
                             case tcImps of
                                 Nothing -> return True -- Does NOT have any sig imps
                                 Just imps -> do
-                                    case find (==(SigImp sigName inType outType inputName body)) imps of
+                                    case find (==(sigName, inType, outType)) impNameTypes of
                                         Nothing -> return True
                                         Just foundImp -> return False -- found the implementation already so send false
                                         -- need to check in and out types, not whole SigImp
+                                    where 
+                                        impNameTypes = map getSigImpNameTypes imps
                     where sigNames = fromList (map getSigDefName defs)
     where 
         tcImps = getTcImpIdentifiers tcName gamma
