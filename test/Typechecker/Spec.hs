@@ -91,16 +91,13 @@ spec = do
 
             let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [(Identifier "equals", [])], TcImp []))
 
-            -- anotherFunk is a string but typechecking it results in an int?
             (evalState (typecheck tcDef) typeEnv)
                 `shouldBe` Just (Type (Identifier "typeclass"))
 
             let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [], TcImp []))
 
-            -- anotherFunk is a string but typechecking it results in an int?
             (evalState (typecheck tcDef) typeEnv)
                 `shouldBe` (Just (Type (Identifier "typeclass")))
-
 
             let tcDef = (TypeclassDef (Identifier "equals") [SigDef (Identifier "eq") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b")),SigDef (Identifier "neq") (Generic (GIdentifier "?c")) (Generic (GIdentifier "?d"))])
             let typeEnv = (Gamma (Env [], TldMap [], TcDef [(Identifier "equals", [SigDef (Identifier "lt") (Generic (GIdentifier "?a")) (Generic (GIdentifier "?b"))])], TcImp []))

@@ -69,18 +69,6 @@ getImpType tcn tcf i (Gamma (_, _, _, TcImp ti)) = do
             where
                 gMap2 = fromList (map getSigImpNameInOut imps)
 
-
-    -- case lookup tcn gMap of
-    --     Nothing -> return Nothing
-    --     Just imps -> do
-    --         case lookup (tcf, i) impNameTypes of
-    --             Nothing -> return Nothing
-    --             Just foundOut -> return foundOut
-    --         where 
-    --             impNameTypes = map getSigImpNameInOut imps
-    -- where
-    --     gMap = fromList ti
-
 getIdentifiers :: Type -> Gamma -> Maybe [CDef]
 getIdentifiers t (Gamma (_, TldMap m, _, _)) = do
     c <- lookup t gMap
