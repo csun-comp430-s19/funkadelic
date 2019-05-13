@@ -53,6 +53,10 @@ spec = do
             (evalState (typecheck (ExpNullaryFOCall (Identifier "name"))) typeEnv) `shouldBe` intType
             let typeEnv = (Gamma (Env [], TldMap [], TcDef [],  TcImp [(Identifier "add", [SigImp (Identifier "addOne") (Type (Identifier "Int")) (Type (Identifier "Int")) (Identifier "a") (ExpInteger 1)])]))
             (evalState (typecheck (TypeclassCallInt (ExpAtomInt 5) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne")))) typeEnv) `shouldBe` intType
+            let typeEnv = (Gamma (Env [], TldMap [], TcDef [],  TcImp [(Identifier "add", [SigImp (Identifier "addOne") (Type (Identifier "Str")) (Type (Identifier "Int")) (Identifier "a") (ExpInteger 1)])]))
+            (evalState (typecheck (TypeclassCallStr (ExpAtomStr "hi") (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne")))) typeEnv) `shouldBe` intType
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int")], TldMap [], TcDef [],  TcImp [(Identifier "add", [SigImp (Identifier "addOne") (Type (Identifier "Int")) (Type (Identifier "String")) (Identifier "a") (ExpInteger 1)])]))
+            (evalState (typecheck (TypeclassCallVar (ExpAtomVar (Identifier "x")) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne")))) typeEnv) `shouldBe` stringType
 
         it "FAILS on bad typechecker input" $ do
             let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int")], TldMap [], TcDef [], TcImp []))
@@ -64,6 +68,12 @@ spec = do
             let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "z", mkType "Int")], TldMap [], TcDef [], TcImp []))
             (evalState (typecheck (ExpLambda (ExpInteger 1234) (type' "Int") (ExpInteger 1234) (type' "String"))) typeEnv) `shouldBe` Nothing
 
+            let typeEnv = (Gamma (Env [], TldMap [], TcDef [],  TcImp [(Identifier "add", [SigImp (Identifier "addOne") (Type (Identifier "Str")) (Type (Identifier "Int")) (Identifier "a") (ExpInteger 1)])]))
+            (evalState (typecheck (TypeclassCallInt (ExpAtomInt 5) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne")))) typeEnv) `shouldBe` Nothing
+            let typeEnv = (Gamma (Env [], TldMap [], TcDef [],  TcImp []))
+            (evalState (typecheck (TypeclassCallStr (ExpAtomStr "hi") (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne")))) typeEnv) `shouldBe` Nothing
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "String")], TldMap [], TcDef [],  TcImp [(Identifier "add", [SigImp (Identifier "addOne") (Type (Identifier "Int")) (Type (Identifier "String")) (Identifier "a") (ExpInteger 1)])]))
+            (evalState (typecheck (TypeclassCallVar (ExpAtomVar (Identifier "x")) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne")))) typeEnv) `shouldBe` Nothing
 
 
     describe "typechecking tlds" $ do

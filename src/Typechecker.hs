@@ -277,6 +277,27 @@ instance Typecheck Exp where
                     Nothing -> return Nothing
                     Just t -> return (Just t)
             Nothing -> return Nothing
+    typecheck (TypeclassCallStr (ExpAtomStr _) (Typeclass tc) (TypeclassFunc tcfun)) = do
+        gamma <- get
+        case getImpType tc tcfun (mkType "Str") gamma of
+            Just s -> do
+                case s of
+                    Nothing -> return Nothing
+                    Just t -> return (Just t)
+            Nothing -> return Nothing
+    typecheck (TypeclassCallVar (ExpAtomVar var) (Typeclass tc) (TypeclassFunc tcfun)) = do
+        gamma <- get
+        let t = getType var gamma
+        case t of
+            Nothing -> return Nothing
+            Just t -> do
+                gamma <- get
+                case getImpType tc tcfun t gamma of
+                    Just s -> do
+                        case s of
+                            Nothing -> return Nothing
+                            Just t -> return (Just t)
+                    Nothing -> return Nothing
 
     -- typecheck (ExpPatternMatchCall e1 paramType returnType Pmes) = do 
     --     e1t <- typecheck e1
