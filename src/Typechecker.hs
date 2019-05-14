@@ -64,10 +64,10 @@ pmeTypeCheck (PatternMatchExpression i [_] e) (pt, rt) = do
                 True -> do
                     et <- typecheck e
                     case et == Just rt of
-                        True -> return (Just rt)
-                        False -> return Nothing
-                False -> return Nothing
-        Nothing -> return Nothing 
+                        True -> return rt
+                        False -> Nothing
+                False -> Nothing
+        Nothing -> Nothing 
 
 class Typecheck a where
     typecheck :: a -> State Gamma (Maybe Type)
@@ -77,8 +77,7 @@ instance Typecheck Tld where
     typecheck (FuncDefUnary fName var inType body outType) = do
         gamma <- get
         _ <- put $ addEntryToEnv var inType gamma
-        actualOutType <- typecheck bod
-        y
+        actualOutType <- typecheck body
         case actualOutType == Just outType of
             True -> do
                 _ <- put $ addEntryToEnv fName functionType gamma
