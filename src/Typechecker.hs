@@ -7,6 +7,7 @@ import Control.Monad.Trans.Maybe
 import Prelude hiding (lookup)
 import Parser
 import Data.Map
+import Data.List
 
 -- Type environment
 data Gamma = Gamma (Env, TldMap) deriving (Show)
@@ -14,55 +15,59 @@ data Env = Env [(Identifier, Type)] deriving (Show)
 data TldMap = TldMap [(Type, [CDef])] deriving (Show)
 
 addEntryToEnv :: Identifier -> Type -> Gamma -> Gamma
-addEntryToEnv n t (Gamma (Env l, TldMap m)) =_ Gamma (Env (l ++ [(n,t)]), TldMap m)
+addEntryToEnv n t (Gamma (Env l, TldMap m)) = Gamma (Env (l ++ [(n,t)]), TldMap m)
 
 getType :: Identifier -> Gamma -> Maybe Type
 getType x (Gamma (Env l, _)) = do
-    t <- lookup x gMap
+    t <- Data.Map.lookup x gMap
     return t
     where
         gMap = fromList l
 
 getIdentifiers :: Type -> Gamma -> Maybe [CDef]
 getIdentifiers t (Gamma (_, TldMap m)) = do
-    [c] <- lookup t gMap
+    [c] <- Data.Map.lookup t gMap
     return [c]
     where
         gMap = fromList m
 
-getTypesFromPme :: Pme -> Cdef -> Maybe Type
+getTypesFromPme :: Pme -> CDef -> (Maybe Type)
 getTypesFromPme (PatternMatchExpression a [_] _) (UnaryConstructor i _)  = do
     gamma <- get
     case getType i gamma of
-        (Just (Type (Identifier t1))) -> do
+        Just (Type (Identifier t1)) -> do
             case getType a gamma of
-                (Just (Type (Identifier t2)) -> do
+                Just (Type (Identifier t2)) -> do
                     case t2 == t1 of
-                        True -> return Just (Type (Identifier t2))
-                        False -> return Nothing
-                Nothing -> return Nothing
-        Nothing -> return Nothing
-getTypesFromPme (PatternMatchExpression a [_] _) (NullaryConstructor i)  = do
+                        True -> return (Type (Identifier t2))
+                        False -> Nothing
+                Nothing -> Nothing
+        Nothing -> Nothing
+getTypesFromPme (PatternMatchExpression a [_] _) (NullaryConstructor i) = do
     gamma <- get
     case getType i gamma of
-        (Just (Type (Identifier t1))) -> do
+        Just (Type (Identifier t1)) -> do
             case getType a gamma of
-                (Just (Type (Identifier t2)) -> do
+                Just (Type (Identifier t2)) -> do
                     case t2 == t1 of
-                        True -> return Just (Type (Identifier t2))
+                        True -> return (Type (Identifier t2))
+                        False -> Nothing
+                Nothing -> Nothing
+        Nothing -> Nothing
+
+pmeTypeCheck :: Pme -> (Type, Type) -> (Maybe Type)
+pmeTypeCheck (PatternMatchExpression i [_] e) (pt, rt) = do
+    gamma <- get
+    case getType i gamma of
+        Just (Type (Identifier t1)) -> do
+            case (Type (Identifier t1)) == pt of
+                True -> do
+                    et <- typecheck e
+                    case et == Just rt of
+                        True -> return (Just rt)
                         False -> return Nothing
-                Nothing -> return Nothing
-        Nothing -> return Nothing
-
-
--- checkPme :: Type -> Type -> Identifier -> [Identifier] -> Exp -> Maybe Type
--- checkPme pType rType cName _ e1 = do
---     case (Just pType) == typecheck cName of
---         True -> do
---             case (Just rType) == typecheck e1 of
---                 True -> return (Just rType)
---                 False -> return Nothing
---         False -> return Nothing
+                False -> return Nothing
+        Nothing -> return Nothing 
 
 class Typecheck a where
     typecheck :: a -> State Gamma (Maybe Type)
@@ -72,7 +77,8 @@ instance Typecheck Tld where
     typecheck (FuncDefUnary fName var inType body outType) = do
         gamma <- get
         _ <- put $ addEntryToEnv var inType gamma
-        actualOutType <- typecheck body
+        actualOutType <- typecheck bod
+        y
         case actualOutType == Just outType of
             True -> do
                 _ <- put $ addEntryToEnv fName functionType gamma
@@ -131,11 +137,18 @@ instance Typecheck Exp where
     typecheck (ExpPatternMatchCall e1 paramType returnType pmes) = do 
         e1t <- typecheck e1
         gamma <- get 
-        case e1t == (just paramType) of
+        case e1t == (Just paramType) of
             True -> do
                 case getIdentifiers paramType gamma of
                     Just [construct] -> do
-                        [matchingType] <- zipwith getConstructorsFromPme pmes [construct]
-                         
+                        [matchingType] <- zipWith getTypesFromPme pmes [construct]
+                        case elemIndex Nothing [matchingType] of
+                            Nothing -> do
+                                [typesForCheck] <- Prelude.take (length pmes) (repeat (paramType, returnType))
+                                [pmeTypeResults] <- zipWith pmeTypeCheck pmes [typesForCheck]
+                                case elemIndex Nothing [typesForCheck] of
+                                    Nothing -> return (Just returnType)
+                                    Just a -> return Nothing
+                            Just a -> return Nothing                         
                     Nothing -> return Nothing
             False -> return Nothing
