@@ -146,7 +146,7 @@ instance Typecheck Exp where
                             Nothing -> do
                                 [typesForCheck] <- Prelude.take (length pmes) (repeat (paramType, returnType))
                                 [pmeTypeResults] <- zipWith pmeTypeCheck pmes [typesForCheck]
-                                case elemIndex Nothing [typesForCheck] of
+                                case elemIndex Nothing [pmeTypeResults] of
                                     Nothing -> return (Just returnType)
                                     Just a -> return Nothing
                             Just a -> return Nothing                         
