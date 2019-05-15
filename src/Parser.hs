@@ -4,7 +4,7 @@ module Parser where
 import System.IO
 import Text.Parsec hiding (try)
 import Control.Monad
-import Data.Char (isLetter, isDigit)
+import Data.Char (isLetter, isDigit, isUpper)
 import Text.Parsec.Pos
 import Text.Parsec.Prim hiding (try)
 import Text.Parsec.Combinator 
@@ -419,7 +419,7 @@ gIdentifier = do
     rest <- many followingChars
     return $ GIdentifier (first:rest)
   where
-    firstChar = satisfy (\a -> a == '?')
+    firstChar = satisfy (\a -> isLetter a && isUpper a)
     followingChars = satisfy (\a -> isDigit a || isLetter a)
 
 
