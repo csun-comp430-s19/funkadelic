@@ -53,7 +53,9 @@ Algebraic data-types, typechecker; Users will be able to define and combine type
 
 - fDef∃FunctionDefinition ::= name(exp1:τ):τ{exp2} | name():τ{exp1}
 
-- exp∃Expression ::= x | i | s | ie | \(exp){exp}:τ | name(exp) **Function call** | <exp {"," exp}>
+- exp∃Expression ::= x | i | s | ie | case exp:τ of:τ (pme)+ | \(exp){exp}:τ | name(exp) **Function call**
+
+- exp∃PatternMatchExpressioon ::= name((name { "," name})*)->exp
 
 - cDef∃ConstructorDefinition ::= name(τ∗)
 

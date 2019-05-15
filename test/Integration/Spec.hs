@@ -36,22 +36,22 @@ stringType = (Just $ type' "String")
 spec = do
      describe "integrate integer expressions with parser and typechecker" $ do
          it "PASSES on good parse input, good typechecker input" $ do
-            let typeEnv = (Gamma [(Identifier "x", mkType "Int")])
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseIExp "1+1" typeEnv) `shouldBe` intType
 
-            let typeEnv = (Gamma [(Identifier "x", mkType "Int")])
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseIExp "x" typeEnv) `shouldBe` intType
 
-            let typeEnv = (Gamma [(Identifier "x", mkType "Int")])
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseIExp "1" typeEnv) `shouldBe` intType
 
             (parseAndTypecheck parseIExp "x*1+2-3/4" typeEnv) `shouldBe` intType
 
-            let typeEnv = (Gamma [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "z", mkType "Int")])
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "z", mkType "Int")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseIExp "y" typeEnv) `shouldBe` stringType
 
          it "FAILS on bad parse input" $ do
-            let typeEnv = (Gamma [(Identifier "x", mkType "Int")])
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseIExp "2*_" typeEnv) `shouldBe` Nothing
             (parseAndTypecheck parseIExp "2*8a" typeEnv) `shouldBe` Nothing
             (parseAndTypecheck parseIExp "3^+2" typeEnv) `shouldBe` Nothing
@@ -71,10 +71,10 @@ spec = do
 
      describe "integrate expressions with parser and typechecker" $ do
          it "PASSES on good parse input, good typechecker input" $ do
-            let typeEnv = (Gamma [(Identifier "x", mkType "Int")])
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseExp "1234" typeEnv) `shouldBe` intType
             (parseAndTypecheck parseExp "\"xyz\"" typeEnv) `shouldBe` stringType
-            let typeEnv = (Gamma [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "z", mkType "Int")])
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "z", mkType "Int")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseExp "y" typeEnv) `shouldBe` stringType
             (evalState (typecheck (ExpIExp (IExpVar (Identifier "z")))) typeEnv) `shouldBe` intType
             (parseAndTypecheck parseExp "1" typeEnv) `shouldBe` intType
@@ -84,22 +84,22 @@ spec = do
             (parseAndTypecheck parseExp "\\(1234):Int{\"1234\"}:String" typeEnv) `shouldBe` stringType
 
 
-            let typeEnv = (Gamma [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "name", (mkFuncType "Int" "String"))])
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "name", (mkFuncType "Int" "String"))], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseExp "name(x)" typeEnv) `shouldBe` stringType
 
-            let typeEnv = (Gamma [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "name", mkType "Int")])
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "name", mkType "Int")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseExp "name()" typeEnv) `shouldBe` intType
 
          it "FAILS on bad parse input" $ do
-            let typeEnv = (Gamma [(Identifier "x", mkType "Int")])
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseExp "name(x" typeEnv) `shouldBe` Nothing
 
          it "FAILS on bad typechecker input" $ do
-            let typeEnv = (Gamma [(Identifier "x", mkType "Int")])
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseExp "name()" typeEnv) `shouldBe` Nothing
-            let typeEnv = (Gamma [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "name", (mkFuncType "String" "String"))])
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String"), (Identifier "name", (mkFuncType "String" "String"))], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseExp "name(x)" typeEnv) `shouldBe` Nothing
-            let typeEnv = (Gamma [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String")])
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int"), (Identifier "y", mkType "String")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseExp "name(x)" typeEnv) `shouldBe` Nothing
             (parseAndTypecheck parseExp "\\(1234):String{1234}:Int" typeEnv) `shouldBe` Nothing
             (parseAndTypecheck parseExp "\\(1234):String{1234}:String" typeEnv) `shouldBe` Nothing
@@ -110,19 +110,19 @@ spec = do
      describe "integrate tlds with parser and typechecker" $ do
          it "PASSES on good parse input, good typechecker input" $ do
 
-            let typeEnv = (Gamma [(Identifier "funk", mkType "String")])
+            let typeEnv = (Gamma (Env [(Identifier "funk", mkType "String")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseTld "funk=func(a:String):String{a}" typeEnv) `shouldBe` Just (FunctionType (Type (Identifier "String")) (Type (Identifier "String")))
 
-            let typeEnv = (Gamma [(Identifier "anotherFunk", mkType "Int")])
+            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "Int")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseTld "funk=func():Int{1234}" typeEnv) `shouldBe` Just (Type (Identifier "Int"))
 
 
          it "FAILS on bad typechecker input" $ do
-            let typeEnv = (Gamma [(Identifier "anotherFunk", mkType "String")])
+            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseTld "anotherFunk=func():String{1234}" typeEnv) `shouldBe` Nothing
 
-            let typeEnv = (Gamma [(Identifier "anotherFunk", mkType "String")])
+            let typeEnv = (Gamma (Env [(Identifier "anotherFunk", mkType "String")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseTld "anotherFunk=func():String{a}" typeEnv) `shouldBe` Nothing
 
-            let typeEnv = (Gamma [(Identifier "function", mkType "String")])
+            let typeEnv = (Gamma (Env [(Identifier "function", mkType "String")], TldMap [], TcDef [], TcImp []))
             (parseAndTypecheck parseTld "anotherFunk=func():String{x+y+x=5}" typeEnv) `shouldBe` Nothing

@@ -51,7 +51,15 @@ spec = do
             parseExp "x*y" `shouldBe` (Right $ ExpIExp $ IExp (IExpVar $ Identifier "x") Mult (IExpVar $ Identifier "y"))
             parseExp "name(x)" `shouldBe` (Right (ExpUnaryFOCall (Identifier "name") (ExpVariable $ Identifier "x")))
             parseExp "name()" `shouldBe` (Right (ExpNullaryFOCall (Identifier "name")))
+            parseExp "case 12:Integer of:String name()->\"xyz\"" `shouldBe` (Right (ExpPatternMatchCall (ExpInteger 12) (Type $ Identifier "Integer") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [] (ExpString "xyz")] ))
+            parseExp "case 12:Integer of:String name()->\"xyz\"other()->\"abc\"" `shouldBe` (Right (ExpPatternMatchCall (ExpInteger 12) (Type $ Identifier "Integer") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [] (ExpString "xyz"), PatternMatchExpression (Identifier "other") [] (ExpString "abc")] ))
+            parseExp "case 12:Integer of:String name(thing)->\"xyz\"" `shouldBe` (Right (ExpPatternMatchCall (ExpInteger 12) (Type $ Identifier "Integer") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [Identifier "thing"] (ExpString "xyz")] ))
+            parseExp "case 12:Integer of:String name(thing,other)->\"xyz\"" `shouldBe` (Right (ExpPatternMatchCall (ExpInteger 12) (Type $ Identifier "Integer") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [Identifier "thing", Identifier "other"] (ExpString "xyz")] ))
             parseExp "<1,2,3,4>" `shouldBe` (Right (ExpProduct [ExpInteger 1, ExpInteger 2, ExpInteger 3, ExpInteger 4]))
+            parseExp "a->add::addOne" `shouldBe` (Right (TypeclassCallVar (ExpAtomVar (Identifier "a")) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))))
+            parseExp "5->add::addOne" `shouldBe` (Right (TypeclassCallInt (ExpAtomInt 5) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))))
+            parseExp "\"hi\"->add::addOne" `shouldBe` (Right (TypeclassCallStr (ExpAtomStr "hi") (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))))
+
 
         it "FAILS on bad parser input" $ do
             (getRight $ parseExp "2a") `shouldBe` Nothing
@@ -69,14 +77,21 @@ spec = do
             parseTld "datanewType=Nullary()" `shouldBe` (Right (DataDef (Identifier "newType") [NullaryConstructor $ Identifier "Nullary"]))
             parseTld "datanewType=Calculate(Integer)" `shouldBe` (Right (DataDef (Identifier "newType") [UnaryConstructor (Identifier "Calculate") (Type $ Identifier "Integer")]))
             parseTld "datanewType=SomeFunct()Calculate(Integer)" `shouldBe` (Right (DataDef (Identifier "newType") [(NullaryConstructor (Identifier "SomeFunct")), (UnaryConstructor (Identifier "Calculate") (Type $ Identifier "Integer"))]))
-            parseTld "funk=func(a:string):string{a}" `shouldBe` (Right (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "string") (ExpVariable $ Identifier "a") (Type $ Identifier "string")))
-            parseTld "funk=func():string{a}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpVariable $ Identifier "a") (Type $ Identifier "string")))
-            parseTld "funk=func():string{x*y}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExpVar (Identifier "y")))) (Type (Identifier "string"))))
-            parseTld "funk=func():string{x*y+x==5}" `shouldBe` (Right (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string"))))
-    
+            parseTld "funk=func(a:string):string{a}" `shouldBe` (Right (Func (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "string") (ExpVariable $ Identifier "a") (Type $ Identifier "string"))))
+            parseTld "funk=func():string{a}" `shouldBe` (Right (Func (FuncDefNullary (Identifier "funk") (ExpVariable $ Identifier "a") (Type $ Identifier "string"))))
+            parseTld "funk=func():string{x*y}" `shouldBe` (Right (Func (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExpVar (Identifier "y")))) (Type (Identifier "string")))))
+            parseTld "funk=func():string{x*y+x==5}" `shouldBe` (Right (Func (FuncDefNullary (Identifier "funk") (ExpIExp (IExp (IExpVar (Identifier "x")) Mult (IExp (IExpVar (Identifier "y")) Plus (IExp (IExpVar (Identifier "x")) Equals (IExpInt 5))))) (Type (Identifier "string")))))
+            parseTld "typeclass:equals:eq[A->B]" `shouldBe` (Right (TypeclassDef (Identifier "equals") [SigDef (Identifier "eq") (Generic (GIdentifier "A")) (Generic (GIdentifier "B"))]))
+            parseTld "instance:equals:eq[String->String](a){a}" `shouldBe` (Right (TypeclassImp (Identifier "equals") [SigImp (Identifier "eq") (Type (Identifier "String")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a"))]))
+            parseTld "typeclass:equals:eq[A->B]neq[C->D]" `shouldBe` (Right (TypeclassDef (Identifier "equals") [SigDef (Identifier "eq") (Generic (GIdentifier "A")) (Generic (GIdentifier "B")),SigDef (Identifier "neq") (Generic (GIdentifier "C")) (Generic (GIdentifier "D"))]))
+            parseTld "instance:equals:eq[String->String](a){a}eq[Int->Int](b){b+1}" `shouldBe` (Right (TypeclassImp (Identifier "equals") [SigImp (Identifier "eq") (Type (Identifier "String")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a")),SigImp (Identifier "eq") (Type (Identifier "Int")) (Type (Identifier "Int")) (Identifier "b") (ExpIExp (IExp (IExpVar (Identifier "b")) Plus (IExpInt 1)))]))
+            parseTld "instance:equals:eq[String->String](a){a}neq[String->Int](c){1}" `shouldBe` (Right (TypeclassImp (Identifier "equals") [SigImp (Identifier "eq") (Type (Identifier "String")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a")),SigImp (Identifier "neq") (Type (Identifier "String")) (Type (Identifier "Int")) (Identifier "c") (ExpInteger 1)]))
+
         it "FAILS on bad parser input" $ do
             (getRight $ parseTld "datanewType=Nullary(") `shouldBe` Nothing
             (getRight $ parseTld "datanewType=Calculate") `shouldBe` Nothing
             (getRight $ parseTld "funk=func():string{}") `shouldBe` Nothing
             (getRight $ parseTld "funk=func():{}") `shouldBe` Nothing
             (getRight $ parseTld "funk=func():string{x*_}") `shouldBe` Nothing
+            (getRight $ parseTld "typeclass:equals:eq[a-> ]") `shouldBe` Nothing
+            (getRight $ parseTld "typeclass:equals:eq[a b]") `shouldBe` Nothing
