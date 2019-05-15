@@ -223,9 +223,8 @@ instance Typecheck Tld where
 instance Typecheck IExp where
     typecheck (IExpVar id) = do
         gamma <- get
-        case getType id gamma of
-            Just (Type (Identifier t)) -> return (Just $ mkType $ t)
-            Nothing -> return Nothing
+        return $ getType id gamma
+            
     typecheck iExp = return (Just $ mkType $ "Int")
 
 instance Typecheck Exp where
@@ -254,38 +253,20 @@ instance Typecheck Exp where
             otherwise -> return Nothing
     typecheck (ExpNullaryFOCall fName) = do
         gamma <- get
-        case getType fName gamma of
-            Just t -> return (Just t)
-            Nothing -> return Nothing
+        return $ getType fName gamma
     typecheck (TypeclassCallInt (ExpAtomInt _) (Typeclass tc) (TypeclassFunc tcfun)) = do
         gamma <- get
-        case getImpType tc tcfun (mkType "Int") gamma of
-            Just s -> do
-                case s of
-                    Nothing -> return Nothing
-                    Just t -> return (Just t)
-            Nothing -> return Nothing
+        return $ join $ getImpType tc tcfun (mkType "Int") gamma
     typecheck (TypeclassCallStr (ExpAtomStr _) (Typeclass tc) (TypeclassFunc tcfun)) = do
         gamma <- get
-        case getImpType tc tcfun (mkType "Str") gamma of
-            Just s -> do
-                case s of
-                    Nothing -> return Nothing
-                    Just t -> return (Just t)
-            Nothing -> return Nothing
+        return $ join $ getImpType tc tcfun (mkType "Str") gamma
     typecheck (TypeclassCallVar (ExpAtomVar var) (Typeclass tc) (TypeclassFunc tcfun)) = do
         gamma <- get
-        let t = getType var gamma
-        case t of
-            Nothing -> return Nothing
-            Just t -> do
-                gamma <- get
-                case getImpType tc tcfun t gamma of
-                    Just s -> do
-                        case s of
-                            Nothing -> return Nothing
-                            Just t -> return (Just t)
-                    Nothing -> return Nothing
+        let t = getType var gamma in
+            case t of
+                Nothing -> return Nothing
+                Just t -> do
+                    return $ join $ getImpType tc tcfun t gamma
 
     -- typecheck (ExpPatternMatchCall e1 paramType returnType Pmes) = do 
     --     e1t <- typecheck e1
