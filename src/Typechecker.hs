@@ -42,7 +42,7 @@ insertTcImpsToGamma :: Identifier -> [SignatureImp] -> Gamma -> Maybe Gamma
 insertTcImpsToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = do
     case ti == [] of
         True -> return (Gamma (Env l, TldMap m, TcDef td, TcImp [(n, s)]))
-        False -> do
+        False -> do 
             index <- findIndex (==n) [name | (name, imps) <- ti]
             let newTcImps = (n, ([imps | (name, imps) <- ti] !! index ++ s))
             let (x,_:ys) = splitAt index ti
@@ -50,9 +50,7 @@ insertTcImpsToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = do
             return (Gamma (Env l, TldMap m, TcDef td, TcImp newTi))
 
 getType :: Identifier -> Gamma -> Maybe Type
-getType x (Gamma (Env l, _, _, _)) = do
-    t <- lookup x gMap
-    return t
+getType x (Gamma (Env l, _, _, _)) = lookup x gMap
     where
         gMap = fromList l
 
@@ -62,7 +60,7 @@ getImpType tcn tcf i (Gamma (_, _, _, TcImp ti)) = do
     let tcImps = lookup tcn gMap
     case tcImps of
         Nothing -> return Nothing
-        Just imps -> do
+        Just imps ->
             case lookup (tcf, i) gMap2 of
                 Nothing -> return Nothing
                 Just foundOut -> return (Just foundOut)
@@ -70,16 +68,12 @@ getImpType tcn tcf i (Gamma (_, _, _, TcImp ti)) = do
                 gMap2 = fromList (map getSigImpNameInOut imps)
 
 getIdentifiers :: Type -> Gamma -> Maybe [CDef]
-getIdentifiers t (Gamma (_, TldMap m, _, _)) = do
-    c <- lookup t gMap
-    return c
+getIdentifiers t (Gamma (_, TldMap m, _, _)) = lookup t gMap
     where
         gMap = fromList m
 
 getTcDefIdentifiers :: Identifier -> Gamma -> Maybe [SignatureDef]
-getTcDefIdentifiers tc (Gamma (_, _, TcDef td, _)) = do
-    sigDefs <- lookup tc gMap
-    return sigDefs
+getTcDefIdentifiers tc (Gamma (_, _, TcDef td, _)) = lookup tc gMap
     where
         gMap = fromList td 
 
@@ -91,13 +85,13 @@ getTcImpIdentifiers tc (Gamma (_, _, _, TcImp ti)) = do
         gMap = fromList ti
 
 tcDefSigExists :: (Identifier, SignatureDef, Gamma) -> Maybe Bool
-tcDefSigExists (tcName, sigDef, gamma) =  do
+tcDefSigExists (tcName, sigDef, gamma) =
     case tcDefs of
         Nothing -> return False
-        Just x -> do
+        Just x -> 
             case find (==sigDef) x of
                 Nothing -> return False
-                Just x -> return True
+                Just _ -> return True
     where 
         tcDefs = getTcDefIdentifiers tcName gamma
 
@@ -114,16 +108,16 @@ tcImpGood :: (Identifier, SignatureImp, Gamma) -> Maybe Bool
 tcImpGood (tcName, (SigImp sigName inType outType inputName body), gamma) =  do
     case tcDefs of 
         Nothing -> return False -- We return a reject if typeclass has no signatures
-        Just defs -> do
+        Just defs ->
             case defs == [] of
                 True -> return False
-                False -> do
+                False ->
                     case lookup sigName sigNames of
                         Nothing -> return False -- Does NOT have a sig def
-                        Just x -> do
+                        Just x ->
                             case tcImps of
                                 Nothing -> return True -- Does NOT have any sig imps
-                                Just imps -> do
+                                Just imps ->
                                     case find (==(sigName, inType)) impNameTypes of
                                         Nothing -> return True
                                         Just foundImp -> return False -- found the implementation so send false
@@ -192,11 +186,11 @@ instance Typecheck Tld where
     typecheck (TypeclassImp defName defImps) = do
         gamma <- get
         case True == True of
-            True -> do
+            True ->
                 case anyBadImps of
-                    Nothing -> do
+                    Nothing ->
                         case anyInconsistentImps of
-                            Nothing -> do
+                            Nothing ->
                                 case newGamma of 
                                     Nothing -> return Nothing
                                     Just x -> do
@@ -244,7 +238,7 @@ instance Typecheck Exp where
         actualType <- typecheck param
         gamma <- get
         case getType fName gamma of
-            Just (FunctionType inType outType) -> do
+            Just (FunctionType inType outType) ->
                 case typesMatch of
                     True -> return (Just outType)
                     False -> return Nothing
@@ -265,8 +259,7 @@ instance Typecheck Exp where
         let t = getType var gamma in
             case t of
                 Nothing -> return Nothing
-                Just t -> do
-                    return $ join $ getImpType tc tcfun t gamma
+                Just t -> return $ join $ getImpType tc tcfun t gamma
 
     -- typecheck (ExpPatternMatchCall e1 paramType returnType Pmes) = do 
     --     e1t <- typecheck e1
