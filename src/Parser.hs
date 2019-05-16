@@ -4,7 +4,7 @@ module Parser where
 import System.IO
 import Text.Parsec hiding (try)
 import Control.Monad
-import Data.Char (isLetter, isDigit)
+import Data.Char (isLetter, isDigit, isUpper)
 import Text.Parsec.Pos
 import Text.Parsec.Prim hiding (try)
 import Text.Parsec.Combinator 
@@ -22,6 +22,14 @@ data Type =
 -- Create type called Identifier
 -- Constructor takes in a string (Token)
 newtype Identifier = Identifier String deriving (Show, Eq, Ord)
+
+newtype GIdentifier = GIdentifier String deriving (Show, Eq, Ord)
+
+newtype Generic = Generic GIdentifier deriving (Show, Eq)
+
+data Typeclass = Typeclass Identifier deriving (Show, Eq, Ord)
+
+data TypeclassFunc = TypeclassFunc Identifier deriving (Show, Eq, Ord)
 
 -- iBinaryOperator type
 -- Create a type for all possible binary operations
@@ -51,9 +59,21 @@ data CDef =
 -- tLd∃TopLevelDefinition :: name “= func(” name “:” Type “):”Type”{” exp “}” | “data” name “=” uDtDef
 -- Either a function definition or a data definition
 data Tld = 
+        Func Function
+    |   DataDef Identifier [CDef]
+    |   TypeclassDef Identifier [SignatureDef]
+    |   TypeclassImp Identifier [SignatureImp]
+    deriving (Show, Eq)
+
+data SignatureDef =
+    SigDef Identifier Generic Generic deriving (Show, Eq)
+
+data SignatureImp =
+    SigImp Identifier Type Type Identifier Exp deriving (Show, Eq)
+
+data Function = 
         FuncDefUnary Identifier Identifier Type Exp Type 
     |   FuncDefNullary Identifier Exp Type
-    |   DataDef Identifier [CDef]
     deriving (Show, Eq)
 
 -- iExpression type
@@ -65,11 +85,18 @@ data IExp =
     |   IExp IExp IBinOp IExp 
     deriving (Show, Eq)
 
+data ExpAtom =
+        ExpAtomVar Identifier
+    |   ExpAtomInt Integer
+    |   ExpAtomStr String
+    deriving (Show, Eq)
+
 -- Expression type
 -- exp∃Expression ::= x | i | s | ie | \(exp){exp}:τ | name(exp)
 data Exp = 
         ExpVariable Identifier
     -- |   ExpLet Identifier Exp Type Exp 
+    |   ExpProduct [Exp]
     |   ExpInteger Integer
     |   ExpString String
     |   ExpIExp IExp
@@ -77,6 +104,9 @@ data Exp =
     |   ExpUnaryFOCall Identifier Exp
     |   ExpNullaryFOCall Identifier
     |   ExpPatternMatchCall Exp Type Type [Pme]
+    |   TypeclassCallVar ExpAtom Typeclass TypeclassFunc -- varName tcName tcFuncName
+    |   TypeclassCallInt ExpAtom Typeclass TypeclassFunc -- varName tcName tcFuncName
+    |   TypeclassCallStr ExpAtom Typeclass TypeclassFunc -- varName tcName tcFuncName
     deriving (Show, Eq)
 
 data Pme =
@@ -93,7 +123,18 @@ mkFuncType p r = (FunctionType (Type $ Identifier p) (Type $ Identifier r))
 tldParser :: Parser Tld
 tldParser = 
     try dDef 
-    <|> try nullaryFDef
+    <|> try tldFunctionParser
+    <|> try tDef
+    <|> tImp
+
+tldFunctionParser :: Parser Tld
+tldFunctionParser = do
+    function <- functionParser
+    return $ Func function
+
+functionParser :: Parser Function
+functionParser = 
+    try nullaryFDef
     <|> unaryFDef
 
 -- Parser for a constructor definition
@@ -101,6 +142,32 @@ cDefParser :: Parser CDef
 cDefParser = 
     try unaryCDef 
     <|> nullaryCDef
+
+sigDefParser :: Parser SignatureDef
+sigDefParser = do
+    sigName <- identifier
+    _ <- string "["
+    signatureInput <- Generic <$> gIdentifier
+    _ <- string "->"
+    signatureOutput <- Generic <$> gIdentifier
+    _ <- char ']'
+    return $ SigDef sigName signatureInput signatureOutput
+
+sigImpParser :: Parser SignatureImp
+sigImpParser = do
+    sigName <- identifier
+    _ <- string "["
+    signatureInput <- Type <$> identifier
+    _ <- string "->"
+    signatureOutput <- Type <$> identifier
+    _ <- char ']'
+    _ <- char '('
+    inputName <- identifier
+    _ <- char ')'
+    _ <- char '{'
+    body <- expParser
+    _ <- char '}'
+    return $ SigImp sigName signatureInput signatureOutput inputName body
 
 -- parser for let expressions
 -- let' :: Parser Exp
@@ -115,14 +182,26 @@ cDefParser =
 --     exp <- expParser
 --     return $ ExpLet name value t exp
 
+-- parser for product type expressions
+product' :: Parser Exp
+product' = do
+    _ <- char '<'
+    exps <- sepBy expParser (char ',')
+    _ <- char '>'
+    return $ ExpProduct exps
+
 -- Parser for an expression
 expParser :: Parser Exp
 expParser = 
     try unaryFOCall
     -- <|> try let'
+    <|> try product'
     <|> try nullaryFOCall
     <|> try lambda
     <|> try patternMatchCall
+    <|> try tCallVar
+    <|> try tCallInt
+    <|> try tCallStr
     <|> ExpIExp <$> (try iExpTerm)
     <|> expAtom
 
@@ -193,9 +272,53 @@ dDef = do
     cDefs <- many1 cDefParser
     return $ DataDef name cDefs -- Note: cDefs is a list of constructor defs
 
+tDef :: Parser Tld
+tDef = do
+    _ <- string "typeclass:"
+    name <- identifier
+    _ <- char ':'
+    sigs <- many1 sigDefParser
+    return $ TypeclassDef name sigs
+
+tImp :: Parser Tld
+tImp = do
+    _ <- string "instance:"
+    typeclass <- identifier -- existing typeclass name
+    _ <- char ':'
+    sigs <- many1 sigImpParser
+    return $ TypeclassImp typeclass sigs
+
+tCallVar :: Parser Exp
+tCallVar = do
+    var <- ExpAtomVar <$> identifier
+    _ <- string "->"
+    tc <- Typeclass <$> identifier -- existing typeclass name
+    _ <- char ':'
+    tcFunc <- TypeclassFunc <$> identifier
+    return $ TypeclassCallVar var tc tcFunc
+
+tCallInt :: Parser Exp
+tCallInt = do
+    int <- ExpAtomInt <$> integer
+    _ <- string "->"
+    tc <- Typeclass <$> identifier -- existing typeclass name
+    _ <- char ':'
+    tcFunc <- TypeclassFunc <$> identifier
+    return $ TypeclassCallInt int tc tcFunc
+
+tCallStr :: Parser Exp
+tCallStr = do
+    str <- ExpAtomStr <$> string'
+    _ <- string "->"
+    tc <- Typeclass <$> identifier -- existing typeclass name
+    _ <- char ':'
+    tcFunc <- TypeclassFunc <$> identifier
+    return $ TypeclassCallStr str tc tcFunc
+
+
 -- Extract the name and parameter name & type, return type, and expression
 -- Lifts the extracted values into the monad FuncDefUnary
-unaryFDef :: Parser Tld
+unaryFDef :: Parser Function
 unaryFDef = do
     name <- identifier
     _ <- string "=func("
@@ -211,7 +334,7 @@ unaryFDef = do
 
 -- Extract the name, return type, and expression
 -- Lifts the extracted values into the monad FuncDefNullary
-nullaryFDef :: Parser Tld
+nullaryFDef :: Parser Function
 nullaryFDef = do
     name <- identifier
     _ <- string "=func():"
@@ -286,6 +409,19 @@ identifier = do
   where
     firstChar = satisfy (\a -> isLetter a)
     followingChars = satisfy (\a -> isDigit a || isLetter a)
+
+-- Extract the function name
+-- Lifts the extracted values into the monad Identifier
+-- Note: Identifiers must start with an alphabetical character
+gIdentifier :: Parser GIdentifier
+gIdentifier = do
+    first <- firstChar -- should be a letter
+    rest <- many followingChars
+    return $ GIdentifier (first:rest)
+  where
+    firstChar = satisfy (\a -> isLetter a && isUpper a)
+    followingChars = satisfy (\a -> isDigit a || isLetter a)
+
 
 -- generates a parser for an arbitrary type
 type' :: Parser Type
