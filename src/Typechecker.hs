@@ -27,8 +27,8 @@ getType x (Gamma (Env l, _)) = do
 getIdentifiers :: Type -> Gamma -> [CDef]
 getIdentifiers t (Gamma (_, TldMap m)) = do
     case Data.Map.lookup t gMap  of
-        Nothing -> return (join [])
-        Just cs -> return (join cs)
+        Nothing -> []
+        Just cs -> cs
     where
         gMap = fromList m
 
