@@ -70,6 +70,21 @@ pmeTypeCheck (PatternMatchExpression i [_] e) (pt, rt) = do
                 False -> return Nothing
         Nothing -> return Nothing 
 
+reduceList :: [(Maybe Type)] -> (Maybe Type)
+reduceList [] = Nothing
+reduceList ((Just h):t) = reduceListWithType t h
+reduceList ((Nothing):t) = Nothing 
+
+reduceListWithType :: [(Maybe Type)] -> Type -> (Maybe Type)
+reduceListWithType [] t1 = (Just t1)
+reduceListWithType (head:tail) t1 = do 
+    case head == Nothing of
+        True -> Nothing
+        False -> do
+            case head == Just t1 of
+                True -> reduceListWithType tail t1
+                False -> Nothing
+
 class Typecheck a where
     typecheck :: a -> State Gamma (Maybe Type)
 
@@ -141,14 +156,13 @@ instance Typecheck Exp where
             True -> do
                 case getIdentifiers paramType gamma of
                     constructs -> do
-                        matchingTypes <- zipWith getTypesFromPme pmes constructs
-                        case elemIndex Nothing matchingTypes of
-                            Nothing -> do
-                                typesForChecks <- Prelude.take (length pmes) (repeat (paramType, returnType))
-                                pmeTypeResults <- zipWith pmeTypeCheck pmes typesForChecks
-                                case elemIndex Nothing pmeTypeResults of
-                                    Nothing -> return (Just returnType)
-                                    Just a -> return Nothing
-                            Just a -> return Nothing                         
-                    Nothing -> return Nothing
+                        listPmeTypes <- sequence $ zipWith getTypesFromPme pmes constructs
+                        case reduceList listPmeTypes of
+                            Just a -> do
+                                -- typesForChecks <- Prelude.take (length pmes) (repeat (paramType, returnType))
+                                pmeTypeResults <- sequence $ zipWith pmeTypeCheck pmes (Prelude.take (length pmes) (repeat (paramType, returnType)))
+                                case reduceList pmeTypeResults of
+                                    Just b -> return (Just returnType)
+                                    Nothing -> return Nothing
+                            Nothing -> return Nothing                         
             False -> return Nothing
