@@ -48,3 +48,4 @@ spec = do
             translate (DataDef (Identifier "x") [NullaryConstructor $ Identifier "Nullary"]) typeEnv `shouldBe` "let x = Data(function(){ Nullary:{}};"
             translate (Func (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "string") (ExpVariable $ Identifier "a") (Type $ Identifier "string"))) typeEnv `shouldBe` "function funk(a) { a }"
             translate (Func (FuncDefNullary (Identifier "funk") (ExpVariable $ Identifier "a") (Type $ Identifier "string"))) typeEnv `shouldBe` "function funk() { a }"
+            translate (TypeclassImp (Identifier "equals") [SigImp (Identifier "eq") (Type (Identifier "Int")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a")),SigImp (Identifier "eq") (Type (Identifier "Str")) (Type (Identifier "Int")) (Identifier "b") (ExpIExp (IExp (IExpVar (Identifier "b")) Plus (IExpInt 1)))]) typeEnv `shouldBe` "function funk() { a }"
