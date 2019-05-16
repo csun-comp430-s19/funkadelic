@@ -293,7 +293,7 @@ tCallVar = do
     var <- ExpAtomVar <$> identifier
     _ <- string "->"
     tc <- Typeclass <$> identifier -- existing typeclass name
-    _ <- string "::"
+    _ <- char ':'
     tcFunc <- TypeclassFunc <$> identifier
     return $ TypeclassCallVar var tc tcFunc
 
@@ -302,7 +302,7 @@ tCallInt = do
     int <- ExpAtomInt <$> integer
     _ <- string "->"
     tc <- Typeclass <$> identifier -- existing typeclass name
-    _ <- string "::"
+    _ <- char ':'
     tcFunc <- TypeclassFunc <$> identifier
     return $ TypeclassCallInt int tc tcFunc
 
@@ -311,7 +311,7 @@ tCallStr = do
     str <- ExpAtomStr <$> string'
     _ <- string "->"
     tc <- Typeclass <$> identifier -- existing typeclass name
-    _ <- string "::"
+    _ <- char ':'
     tcFunc <- TypeclassFunc <$> identifier
     return $ TypeclassCallStr str tc tcFunc
 
