@@ -24,14 +24,15 @@ getType x (Gamma (Env l, _)) = do
     where
         gMap = fromList l
 
-getIdentifiers :: Type -> Gamma -> Maybe [CDef]
+getIdentifiers :: Type -> Gamma -> [CDef]
 getIdentifiers t (Gamma (_, TldMap m)) = do
-    [c] <- Data.Map.lookup t gMap
-    return [c]
+    case Data.Map.lookup t gMap  of
+        Nothing -> return (join [])
+        Just cs -> return (join cs)
     where
         gMap = fromList m
 
-getTypesFromPme :: Pme -> CDef -> (Maybe Type)
+getTypesFromPme :: Pme -> CDef -> State Gamma (Maybe Type)
 getTypesFromPme (PatternMatchExpression a [_] _) (UnaryConstructor i _)  = do
     gamma <- get
     case getType i gamma of
@@ -39,10 +40,10 @@ getTypesFromPme (PatternMatchExpression a [_] _) (UnaryConstructor i _)  = do
             case getType a gamma of
                 Just (Type (Identifier t2)) -> do
                     case t2 == t1 of
-                        True -> return (Type (Identifier t2))
-                        False -> Nothing
-                Nothing -> Nothing
-        Nothing -> Nothing
+                        True -> return (Just (Type (Identifier t2)))
+                        False -> return Nothing
+                Nothing -> return Nothing
+        Nothing -> return Nothing
 getTypesFromPme (PatternMatchExpression a [_] _) (NullaryConstructor i) = do
     gamma <- get
     case getType i gamma of
@@ -50,12 +51,12 @@ getTypesFromPme (PatternMatchExpression a [_] _) (NullaryConstructor i) = do
             case getType a gamma of
                 Just (Type (Identifier t2)) -> do
                     case t2 == t1 of
-                        True -> return (Type (Identifier t2))
-                        False -> Nothing
-                Nothing -> Nothing
-        Nothing -> Nothing
+                        True -> return (Just (Type (Identifier t2)))
+                        False -> return Nothing
+                Nothing -> return Nothing
+        Nothing -> return Nothing
 
-pmeTypeCheck :: Pme -> (Type, Type) -> (Maybe Type)
+pmeTypeCheck :: Pme -> (Type, Type) -> State Gamma (Maybe Type)
 pmeTypeCheck (PatternMatchExpression i [_] e) (pt, rt) = do
     gamma <- get
     case getType i gamma of
@@ -64,10 +65,10 @@ pmeTypeCheck (PatternMatchExpression i [_] e) (pt, rt) = do
                 True -> do
                     et <- typecheck e
                     case et == Just rt of
-                        True -> return rt
-                        False -> Nothing
-                False -> Nothing
-        Nothing -> Nothing 
+                        True -> return (Just rt)
+                        False -> return Nothing
+                False -> return Nothing
+        Nothing -> return Nothing 
 
 class Typecheck a where
     typecheck :: a -> State Gamma (Maybe Type)
@@ -139,13 +140,13 @@ instance Typecheck Exp where
         case e1t == (Just paramType) of
             True -> do
                 case getIdentifiers paramType gamma of
-                    Just [construct] -> do
-                        [matchingType] <- zipWith getTypesFromPme pmes [construct]
-                        case elemIndex Nothing [matchingType] of
+                    constructs -> do
+                        matchingTypes <- zipWith getTypesFromPme pmes constructs
+                        case elemIndex Nothing matchingTypes of
                             Nothing -> do
-                                [typesForCheck] <- Prelude.take (length pmes) (repeat (paramType, returnType))
-                                [pmeTypeResults] <- zipWith pmeTypeCheck pmes [typesForCheck]
-                                case elemIndex Nothing [pmeTypeResults] of
+                                typesForChecks <- Prelude.take (length pmes) (repeat (paramType, returnType))
+                                pmeTypeResults <- zipWith pmeTypeCheck pmes typesForChecks
+                                case elemIndex Nothing pmeTypeResults of
                                     Nothing -> return (Just returnType)
                                     Just a -> return Nothing
                             Just a -> return Nothing                         
