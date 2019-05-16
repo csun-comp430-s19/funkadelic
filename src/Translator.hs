@@ -30,12 +30,12 @@ instance Translate Exp Gamma where
     translate (ExpNullaryFOCall (Identifier id)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = id ++ "()"
 
 instance TranslateTcCall Exp Type Gamma where
-    translateTcCall (TypeclassCallInt (ExpAtomInt num) (Typeclass (Identifier tcName)) (TypeclassFunc (Identifier tcFuncName))) (Type (Identifier t)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "typeclass" ++ tcName ++ tcFuncName ++ t ++ "(" ++ show num ++ ")"
-    translateTcCall (TypeclassCallStr (ExpAtomStr str) (Typeclass (Identifier tcName)) (TypeclassFunc (Identifier tcFuncName))) (Type (Identifier t)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "typeclass" ++ tcName ++ tcFuncName ++ t ++ "(" ++ str ++ ")"
+    translateTcCall (TypeclassCallInt (ExpAtomInt num) (Typeclass (Identifier tcName)) (TypeclassFunc (Identifier tcFuncName))) (Type (Identifier t)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "_" ++ tcName ++ tcFuncName ++ t ++ "(" ++ show num ++ ")"
+    translateTcCall (TypeclassCallStr (ExpAtomStr str) (Typeclass (Identifier tcName)) (TypeclassFunc (Identifier tcFuncName))) (Type (Identifier t)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "_" ++ tcName ++ tcFuncName ++ t ++ "(" ++ str ++ ")"
     translateTcCall (TypeclassCallVar (ExpAtomVar (Identifier var)) (Typeclass (Identifier tcName)) (TypeclassFunc (Identifier tcFuncName))) (Type (Identifier t)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) =
         case getType (Identifier var) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) of
             Nothing -> ("FAIL. TYPE NOT FOUND IN GAMMA FOR " ++ var)
-            Just (Type (Identifier t)) -> ( "typeclass" ++ tcName ++ tcFuncName ++ t ++ "(" ++ var ++ ")" )
+            Just (Type (Identifier t)) -> ( "_" ++ tcName ++ tcFuncName ++ t ++ "(" ++ var ++ ")" )
 
 
 
@@ -49,4 +49,4 @@ instance Translate Tld Gamma where
     translate (Func (FuncDefNullary (Identifier fName) e1 _)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "function " ++ fName ++ "() { " ++ (translate e1 (Gamma (Env l, TldMap m, TcDef td, TcImp ti))) ++ " }"
     translate (TypeclassImp (Identifier tcName) imps) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = (concatNLs (map imp2Fun imps))
         where 
-            imp2Fun (SigImp (Identifier funName) (Type (Identifier inTypeStr)) (Type (Identifier _)) (Identifier paramName) (exp)) = ("function " ++ "typeclass" ++ tcName ++ funName ++ inTypeStr ++ "(" ++ paramName ++ ") { " ++ (translate exp (Gamma (Env l, TldMap m, TcDef td, TcImp ti))) ++ " }")
+            imp2Fun (SigImp (Identifier funName) (Type (Identifier inTypeStr)) (Type (Identifier _)) (Identifier paramName) (exp)) = ("function " ++ "_" ++ tcName ++ funName ++ inTypeStr ++ "(" ++ paramName ++ ") { " ++ (translate exp (Gamma (Env l, TldMap m, TcDef td, TcImp ti))) ++ " }")

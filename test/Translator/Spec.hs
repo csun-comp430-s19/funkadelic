@@ -30,10 +30,10 @@ spec = do
             translate (ExpLambda (ExpVariable $ Identifier "x") (Type $ Identifier "String") (ExpVariable $ Identifier "y") (Type $ Identifier "String")) typeEnv `shouldBe` "function(x) {y}"
             translate (ExpUnaryFOCall (Identifier "name") (ExpVariable $ Identifier "x")) typeEnv `shouldBe` "name(x)"
             translate (ExpNullaryFOCall (Identifier "name")) typeEnv `shouldBe` "name()"
-            translateTcCall (TypeclassCallInt (ExpAtomInt 5) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))) (Type $ Identifier "Int") typeEnv `shouldBe` "typeclassaddaddOneInt(5)"
-            translateTcCall (TypeclassCallStr (ExpAtomStr "hello") (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))) (Type $ Identifier "Int") typeEnv `shouldBe` "typeclassaddaddOneInt(hello)"
+            translateTcCall (TypeclassCallInt (ExpAtomInt 5) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))) (Type $ Identifier "Int") typeEnv `shouldBe` "_addaddOneInt(5)"
+            translateTcCall (TypeclassCallStr (ExpAtomStr "hello") (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))) (Type $ Identifier "Int") typeEnv `shouldBe` "_addaddOneInt(hello)"
             let typeEnv = (Gamma (Env [(Identifier "hi", mkType "Terrible")], TldMap [], TcDef [], TcImp []))
-            translateTcCall (TypeclassCallVar (ExpAtomVar (Identifier "hi")) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))) (Type $ Identifier "Int") typeEnv `shouldBe` "typeclassaddaddOneTerrible(hi)"
+            translateTcCall (TypeclassCallVar (ExpAtomVar (Identifier "hi")) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))) (Type $ Identifier "Int") typeEnv `shouldBe` "_addaddOneTerrible(hi)"
             let typeEnv = (Gamma (Env [], TldMap [], TcDef [], TcImp []))
             translateTcCall (TypeclassCallVar (ExpAtomVar (Identifier "hi")) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))) (Type $ Identifier "Int") typeEnv `shouldBe` "FAIL. TYPE NOT FOUND IN GAMMA FOR hi"
 
@@ -48,4 +48,4 @@ spec = do
             translate (DataDef (Identifier "x") [NullaryConstructor $ Identifier "Nullary"]) typeEnv `shouldBe` "let x = Data(function(){ Nullary:{}};"
             translate (Func (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "string") (ExpVariable $ Identifier "a") (Type $ Identifier "string"))) typeEnv `shouldBe` "function funk(a) { a }"
             translate (Func (FuncDefNullary (Identifier "funk") (ExpVariable $ Identifier "a") (Type $ Identifier "string"))) typeEnv `shouldBe` "function funk() { a }"
-            translate (TypeclassImp (Identifier "equals") [SigImp (Identifier "eq") (Type (Identifier "Int")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a")),SigImp (Identifier "eq") (Type (Identifier "Str")) (Type (Identifier "Int")) (Identifier "b") (ExpIExp (IExp (IExpVar (Identifier "b")) Plus (IExpInt 1)))]) typeEnv `shouldBe` "function funk() { a }"
+            translate (TypeclassImp (Identifier "equals") [SigImp (Identifier "eq") (Type (Identifier "Int")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a")),SigImp (Identifier "eq") (Type (Identifier "Str")) (Type (Identifier "Int")) (Identifier "b") (ExpIExp (IExp (IExpVar (Identifier "b")) Plus (IExpInt 1)))]) typeEnv `shouldBe` "function _equalseqInt(a) { a }\nfunction _equalseqStr(b) { b + 1 }\n"
