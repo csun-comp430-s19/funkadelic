@@ -60,7 +60,7 @@ getIdentifiers t (Gamma (_, TldMap m, _, _)) = do
         gMap = fromList m
 
 getTypesFromPme :: Pme -> CDef -> State Gamma (Maybe Type)
-getTypesFromPme (PatternMatchExpression a [_] _) (UnaryConstructor i _)  = do
+getTypesFromPme (PatternMatchExpression a _ _) (UnaryConstructor i _)  = do
     gamma <- get
     case getType i gamma of
         Just (Type (Identifier t1)) -> do
@@ -71,7 +71,7 @@ getTypesFromPme (PatternMatchExpression a [_] _) (UnaryConstructor i _)  = do
                         False -> return Nothing
                 Nothing -> return Nothing
         Nothing -> return Nothing
-getTypesFromPme (PatternMatchExpression a [_] _) (NullaryConstructor i) = do
+getTypesFromPme (PatternMatchExpression a _ _) (NullaryConstructor i) = do
     gamma <- get
     case getType i gamma of
         Just (Type (Identifier t1)) -> do
@@ -156,7 +156,7 @@ tcImpGood (tcName, (SigImp sigName inType outType inputName body), gamma) =  do
         tcDefs = getTcDefIdentifiers tcName gamma
 
 pmeTypeCheck :: Pme -> (Type, Type) -> State Gamma (Maybe Type)
-pmeTypeCheck (PatternMatchExpression i [_] e) (pt, rt) = do
+pmeTypeCheck (PatternMatchExpression i _ e) (pt, rt) = do
     gamma <- get
     case getType i gamma of
         Just (Type (Identifier t1)) -> do
@@ -305,7 +305,6 @@ instance Typecheck Exp where
                         listPmeTypes <- sequence $ zipWith getTypesFromPme pmes constructs
                         case reduceList listPmeTypes of
                             Just a -> do
-                                -- typesForChecks <- Prelude.take (length pmes) (repeat (paramType, returnType))
                                 pmeTypeResults <- sequence $ zipWith pmeTypeCheck pmes (Prelude.take (length pmes) (repeat (paramType, returnType)))
                                 case reduceList pmeTypeResults of
                                     Just b -> return (Just returnType)
