@@ -8,6 +8,9 @@ import Typechecker
 class Translate a g where
     translate :: a -> g -> String
 
+class TranslateTcCall a i g where
+    translateTcCall :: a -> i -> g -> String
+
 instance Translate IExp Gamma where
     translate (IExpInt a) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = (show a)
     translate (IExpVar (Identifier a)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = a
@@ -21,6 +24,16 @@ instance Translate Exp Gamma where
     translate (ExpIExp a) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = (translate a (Gamma (Env l, TldMap m, TcDef td, TcImp ti)))
     translate (ExpUnaryFOCall (Identifier id) e1) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = id ++ "(" ++ (translate e1 (Gamma (Env l, TldMap m, TcDef td, TcImp ti))) ++ ")"
     translate (ExpNullaryFOCall (Identifier id)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = id ++ "()"
+
+instance TranslateTcCall Exp Type Gamma where
+    translateTcCall (TypeclassCallInt (ExpAtomInt num) (Typeclass (Identifier tcName)) (TypeclassFunc (Identifier tcFuncName))) (Type (Identifier t)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "typeclass" ++ tcName ++ tcFuncName ++ t ++ "(" ++ show num ++ ")"
+    translateTcCall (TypeclassCallStr (ExpAtomStr str) (Typeclass (Identifier tcName)) (TypeclassFunc (Identifier tcFuncName))) (Type (Identifier t)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "typeclass" ++ tcName ++ tcFuncName ++ t ++ "(" ++ str ++ ")"
+    translateTcCall (TypeclassCallVar (ExpAtomVar (Identifier var)) (Typeclass (Identifier tcName)) (TypeclassFunc (Identifier tcFuncName))) (Type (Identifier t)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) =
+        case getType (Identifier var) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) of
+            Nothing -> ("FAIL. TYPE NOT FOUND IN GAMMA FOR " ++ var)
+            Just (Type (Identifier t)) -> ( "typeclass" ++ tcName ++ tcFuncName ++ t ++ "(" ++ var ++ ")" )
+
+
 
 instance Translate CDef Gamma where
     translate (NullaryConstructor (Identifier id)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = id ++ ":{}"

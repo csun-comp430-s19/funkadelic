@@ -22,7 +22,7 @@ spec = do
     
     describe "expressions" $ do
         it "translates expression into javascript" $ do
-            let typeEnv = (Gamma (Env [], TldMap [], TcDef [], TcImp []))
+            let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int")], TldMap [], TcDef [], TcImp []))
             translate (ExpVariable $ Identifier "x") typeEnv `shouldBe` "x"
             translate (ExpVariable $ Identifier "x23232") typeEnv `shouldBe` "x23232"
             translate (ExpInteger 12323232) typeEnv `shouldBe` "12323232"
@@ -30,6 +30,12 @@ spec = do
             translate (ExpLambda (ExpVariable $ Identifier "x") (Type $ Identifier "String") (ExpVariable $ Identifier "y") (Type $ Identifier "String")) typeEnv `shouldBe` "function(x) {y}"
             translate (ExpUnaryFOCall (Identifier "name") (ExpVariable $ Identifier "x")) typeEnv `shouldBe` "name(x)"
             translate (ExpNullaryFOCall (Identifier "name")) typeEnv `shouldBe` "name()"
+            translateTcCall (TypeclassCallInt (ExpAtomInt 5) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))) (Type $ Identifier "Int") typeEnv `shouldBe` "typeclassaddaddOneInt(5)"
+            translateTcCall (TypeclassCallStr (ExpAtomStr "hello") (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))) (Type $ Identifier "Int") typeEnv `shouldBe` "typeclassaddaddOneInt(hello)"
+            let typeEnv = (Gamma (Env [(Identifier "hi", mkType "Terrible")], TldMap [], TcDef [], TcImp []))
+            translateTcCall (TypeclassCallVar (ExpAtomVar (Identifier "hi")) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))) (Type $ Identifier "Int") typeEnv `shouldBe` "typeclassaddaddOneTerrible(hi)"
+            let typeEnv = (Gamma (Env [], TldMap [], TcDef [], TcImp []))
+            translateTcCall (TypeclassCallVar (ExpAtomVar (Identifier "hi")) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))) (Type $ Identifier "Int") typeEnv `shouldBe` "FAIL. TYPE NOT FOUND IN GAMMA FOR hi"
 
     describe "Constructor Definitionss" $ do
         it "translates Constructor definitions into javascript" $ do
