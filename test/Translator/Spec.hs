@@ -36,6 +36,7 @@ spec = do
             translateTcCall (TypeclassCallVar (ExpAtomVar (Identifier "hi")) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))) (Type $ Identifier "Int") typeEnv `shouldBe` "_addaddOneTerrible(hi)"
             let typeEnv = (Gamma (Env [], TldMap [], TcDef [], TcImp []))
             translateTcCall (TypeclassCallVar (ExpAtomVar (Identifier "hi")) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne"))) (Type $ Identifier "Int") typeEnv `shouldBe` "FAIL. TYPE NOT FOUND IN GAMMA FOR hi"
+            translate (ExpPatternMatchCall (ExpVariable $ Identifier "x") (Type $ Identifier "funType") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [] (ExpString "xyz"), PatternMatchExpression (Identifier "other") [] (ExpString "abc")]) typeEnv `shouldBe` "match x { name: \"xyz\" other: \"abc\"}"
 
     describe "Constructor Definitionss" $ do
         it "translates Constructor definitions into javascript" $ do
