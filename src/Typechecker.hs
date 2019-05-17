@@ -17,10 +17,12 @@ data TldMap = TldMap [(Type, [CDef])] deriving (Show)
 data TcDef = TcDef [(Identifier, [SignatureDef])] deriving (Show)
 data TcImp = TcImp [(Identifier, [SignatureImp])] deriving (Show)
 
-typecheckProgram :: ([Tld], Exp) -> State Gamma (Maybe Type)
+-- typecheckProgram :: ([Tld], Exp) -> State Gamma (Maybe Type)
 typecheckProgram (tlds, exp) = do
     _ <- mapM typecheck tlds
-    typecheck exp
+    _ <- typecheck exp
+    gamma <- get
+    return gamma
     
     
 
