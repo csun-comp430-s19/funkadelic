@@ -17,6 +17,13 @@ data TldMap = TldMap [(Type, [CDef])] deriving (Show)
 data TcDef = TcDef [(Identifier, [SignatureDef])] deriving (Show)
 data TcImp = TcImp [(Identifier, [SignatureImp])] deriving (Show)
 
+typecheckProgram :: ([Tld], Exp) -> State Gamma (Maybe Type)
+typecheckProgram (tlds, exp) = do
+    _ <- mapM typecheck tlds
+    typecheck exp
+    
+    
+
 
 addEntryToEnv :: Identifier -> Type -> Gamma -> Gamma
 addEntryToEnv n t (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = Gamma (Env (l ++ [(n,t)]), TldMap m, TcDef td, TcImp ti)

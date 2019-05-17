@@ -112,12 +112,21 @@ data Exp =
 data Pme =
     PatternMatchExpression Identifier [Identifier] Exp
     deriving(Show, Eq)
+
+parseProgram path = parseFromFile programParser path
+
 -- shortcut for constructing a type
 mkType :: String -> Type 
 mkType t = Type $ Identifier t
 
 mkFuncType :: String -> String -> Type
 mkFuncType p r = (FunctionType (Type $ Identifier p) (Type $ Identifier r))
+
+programParser :: Parser ([Tld], Exp)
+programParser = do
+    tlds <- many1 tldParser
+    exp <- expParser
+    return (tlds, exp)
 
 -- Parser for a top level definition
 tldParser :: Parser Tld
