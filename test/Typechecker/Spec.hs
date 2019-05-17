@@ -78,6 +78,10 @@ spec = do
 
     describe "typechecking tlds" $ do
         it "PASSES on good typechecker input" $ do
+            let typeEnv = (Gamma (Env [], TldMap [], TcDef [], TcImp [])) in
+                (evalState (typecheck (DataDef (Identifier "newType") [(NullaryConstructor (Identifier "SomeFunct")), (UnaryConstructor (Identifier "Calculate") (Type $ Identifier "Integer"))])) typeEnv)
+                    `shouldBe` Just (mkType "newType")
+            
             let typeEnv = (Gamma (Env [(Identifier "funk", mkType "String")], TldMap [], TcDef [], TcImp []))
             (evalState (typecheck (Func (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "String") (ExpVariable $ Identifier "a") (Type $ Identifier "String")))) typeEnv)
                 `shouldBe` Just (FunctionType (Type (Identifier "String")) (Type (Identifier "String")))

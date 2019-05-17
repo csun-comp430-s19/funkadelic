@@ -278,7 +278,7 @@ dDef = do
     _ <- string "data"
     name <- identifier
     _ <- char '='
-    cDefs <- many1 cDefParser
+    cDefs <- cDefParser `sepBy` (char '|')
     return $ DataDef name cDefs -- Note: cDefs is a list of constructor defs
 
 tDef :: Parser Tld

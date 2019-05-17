@@ -28,6 +28,10 @@ typecheckProgram (tlds, exp) = do
 addEntryToEnv :: Identifier -> Type -> Gamma -> Gamma
 addEntryToEnv n t (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = Gamma (Env (l ++ [(n,t)]), TldMap m, TcDef td, TcImp ti)
 
+addUdtToGamma :: Type -> [CDef] -> Gamma -> Gamma
+addUdtToGamma t cDefs (Gamma (env , (TldMap tldMap), tcD, tcP)) = Gamma(env, TldMap (tldMap ++ [(t, cDefs)]), tcD, tcP)
+
+
 addTcDefToGamma :: Identifier -> [SignatureDef] -> Gamma -> Gamma
 addTcDefToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = Gamma (Env l, TldMap m, TcDef (td ++ [(n, s)]), TcImp ti)
 
@@ -220,6 +224,11 @@ instance Typecheck Tld where
                     gMap = fromList [(impExist, True) | impExist <- impsGood]
                     anyBadImps = lookup (Just False) gMap
             False -> return Nothing
+    typecheck (DataDef (Identifier t) cDefs) = do
+        gamma <- get
+        _ <- put $ addUdtToGamma (mkType t) cDefs gamma
+        return $ Just (mkType t)
+
 
 instance Typecheck IExp where
     typecheck (IExpVar id) = do
