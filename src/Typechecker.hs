@@ -4,8 +4,8 @@ module Typechecker where
 import Control.Monad.State.Lazy
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Maybe
-import Prelude hiding (lookup, map)
-import Data.List hiding (lookup)
+import Prelude hiding (map)
+import Data.List
 import Parser
 import Data.Map hiding (map, findIndex, splitAt)
 import Data.Functor.Identity
@@ -54,36 +54,63 @@ insertTcImpsToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = do
             return (Gamma (Env l, TldMap m, TcDef td, TcImp newTi))
 
 getType :: Identifier -> Gamma -> Maybe Type
-getType x (Gamma (Env l, _, _, _)) = lookup x gMap
+
+getIdentifiers :: Type -> Gamma -> [CDef]
+getIdentifiers t (Gamma (_, TldMap m, _, _)) = do
+    case Data.Map.lookup t gMap  of
+        Nothing -> []
+        Just cs -> cs
+    where
+        gMap = fromList m
+
+getTypesFromPme :: Pme -> CDef -> State Gamma (Maybe Type)
+getTypesFromPme (PatternMatchExpression a _ _) (UnaryConstructor i _)  = do
+    gamma <- get
+    case getType i gamma of
+        Just (Type (Identifier t1)) -> do
+            case getType a gamma of
+                Just (Type (Identifier t2)) -> do
+                    case t2 == t1 of
+                        True -> return (Just (Type (Identifier t2)))
+                        False -> return Nothing
+                Nothing -> return Nothing
+        Nothing -> return Nothing
+getTypesFromPme (PatternMatchExpression a _ _) (NullaryConstructor i) = do
+    gamma <- get
+    case getType i gamma of
+        Just (Type (Identifier t1)) -> do
+            case getType a gamma of
+                Just (Type (Identifier t2)) -> do
+                    case t2 == t1 of
+                        True -> return (Just (Type (Identifier t2)))
+                        False -> return Nothing
+                Nothing -> return Nothing
+        Nothing -> return Nothing
+getType x (Gamma (Env l, _, _, _)) = Data.Map.lookup x gMap
     where
         gMap = fromList l
 
 getImpType :: Identifier -> Identifier -> Type -> Gamma -> Maybe (Maybe Type)
 getImpType tcn tcf i (Gamma (_, _, _, TcImp ti)) = do
     let gMap = fromList ti
-    let tcImps = lookup tcn gMap
+    let tcImps = Data.Map.lookup tcn gMap
     case tcImps of
         Nothing -> return Nothing
         Just imps ->
-            case lookup (tcf, i) gMap2 of
+            case Data.Map.lookup (tcf, i) gMap2 of
                 Nothing -> return Nothing
                 Just foundOut -> return (Just foundOut)
             where
                 gMap2 = fromList (map getSigImpNameInOut imps)
 
-getIdentifiers :: Type -> Gamma -> Maybe [CDef]
-getIdentifiers t (Gamma (_, TldMap m, _, _)) = lookup t gMap
-    where
-        gMap = fromList m
-
 getTcDefIdentifiers :: Identifier -> Gamma -> Maybe [SignatureDef]
-getTcDefIdentifiers tc (Gamma (_, _, TcDef td, _)) = lookup tc gMap
+getTcDefIdentifiers tc (Gamma (_, _, TcDef td, _)) = Data.Map.lookup tc gMap
     where
         gMap = fromList td 
 
 getTcImpIdentifiers :: Identifier -> Gamma -> Maybe [SignatureImp]
 getTcImpIdentifiers tc (Gamma (_, _, _, TcImp ti)) = do
-    sigImps <- lookup tc gMap
+    sigImps <- Data.Map.lookup tc gMap
     return sigImps
     where
         gMap = fromList ti
@@ -116,7 +143,7 @@ tcImpGood (tcName, (SigImp sigName inType outType inputName body), gamma) =  do
             case defs == [] of
                 True -> return False
                 False ->
-                    case lookup sigName sigNames of
+                    case Data.Map.lookup sigName sigNames of
                         Nothing -> return False -- Does NOT have a sig def
                         Just x ->
                             case tcImps of
@@ -132,14 +159,34 @@ tcImpGood (tcName, (SigImp sigName inType outType inputName body), gamma) =  do
         tcImps = getTcImpIdentifiers tcName gamma
         tcDefs = getTcDefIdentifiers tcName gamma
 
--- checkPme :: Type -> Type -> Identifier -> [Identifier] -> Exp -> Maybe Type
--- checkPme pType rType cName _ e1 = do
---     case (Just pType) == typecheck cName of
---         True -> do
---             case (Just rType) == typecheck e1 of
---                 True -> return (Just rType)
---                 False -> return Nothing
---         False -> return Nothing
+pmeTypeCheck :: Pme -> (Type, Type) -> State Gamma (Maybe Type)
+pmeTypeCheck (PatternMatchExpression i _ e) (pt, rt) = do
+    gamma <- get
+    case getType i gamma of
+        Just (Type (Identifier t1)) -> do
+            case (Type (Identifier t1)) == pt of
+                True -> do
+                    et <- typecheck e
+                    case et == Just rt of
+                        True -> return (Just rt)
+                        False -> return Nothing
+                False -> return Nothing
+        Nothing -> return Nothing 
+
+reduceList :: [(Maybe Type)] -> (Maybe Type)
+reduceList [] = Nothing
+reduceList ((Just h):t) = reduceListWithType t h
+reduceList ((Nothing):t) = Nothing 
+
+reduceListWithType :: [(Maybe Type)] -> Type -> (Maybe Type)
+reduceListWithType [] t1 = (Just t1)
+reduceListWithType (head:tail) t1 = do 
+    case head == Nothing of
+        True -> Nothing
+        False -> do
+            case head == Just t1 of
+                True -> reduceListWithType tail t1
+                False -> Nothing
 
 class Typecheck a where
     typecheck :: a -> State Gamma (Maybe Type)
@@ -186,7 +233,7 @@ instance Typecheck Tld where
                 where 
                     sigExistList = map tcDefSigExists [(defName, sig, gamma) | sig <- defSigs]
                     gMap = fromList [(sigExist, True) | sigExist <- sigExistList]
-                    anyExist = lookup (Just True) gMap
+                    anyExist = Data.Map.lookup (Just True) gMap
     typecheck (TypeclassImp defName defImps) = do
         gamma <- get
         case True == True of
@@ -210,12 +257,12 @@ instance Typecheck Tld where
                                     Just x -> return (outType == x)
                             agreeableList = map isAgreeable' defImps       
                             gMap2 = fromList [(isAgree, True) | isAgree <- agreeableList]
-                            anyInconsistentImps = lookup (Just False) gMap2 
+                            anyInconsistentImps = Data.Map.lookup (Just False) gMap2 
                     Just x -> return Nothing
                 where 
                     impsGood = map tcImpGood [(defName, imp, gamma) | imp <- defImps]
                     gMap = fromList [(impExist, True) | impExist <- impsGood]
-                    anyBadImps = lookup (Just False) gMap
+                    anyBadImps = Data.Map.lookup (Just False) gMap
             False -> return Nothing
     typecheck (DataDef (Identifier t) cDefs) = do
         gamma <- get
@@ -257,6 +304,23 @@ instance Typecheck Exp where
     typecheck (ExpNullaryFOCall fName) = do
         gamma <- get
         return $ getType fName gamma
+    typecheck (ExpPatternMatchCall e1 paramType returnType pmes) = do 
+        e1t <- typecheck e1
+        gamma <- get 
+        case e1t == (Just paramType) of
+            True -> do
+                case getIdentifiers paramType gamma of
+                    constructs -> do
+                        listPmeTypes <- sequence $ zipWith getTypesFromPme pmes constructs
+                        case reduceList listPmeTypes of
+                            Just a -> do
+                                pmeTypeResults <- sequence $ zipWith pmeTypeCheck pmes (Prelude.take (length pmes) (repeat (paramType, returnType)))
+                                case reduceList pmeTypeResults of
+                                    Just b -> return (Just returnType)
+                                    Nothing -> return Nothing
+                            Nothing -> return Nothing                         
+            False -> return Nothing
+        
     typecheck (TypeclassCallInt (ExpAtomInt _) (Typeclass tc) (TypeclassFunc tcfun)) = do
         gamma <- get
         return $ join $ getImpType tc tcfun (mkType "Int") gamma
@@ -269,12 +333,3 @@ instance Typecheck Exp where
             case t of
                 Nothing -> return Nothing
                 Just t -> return $ join $ getImpType tc tcfun t gamma
-
-    -- typecheck (ExpPatternMatchCall e1 paramType returnType Pmes) = do 
-    --     e1t <- typecheck e1
-    --     gamma <- get 
-    --     case e1t == (just paramType) of
-    --         True -> do
-                
-
-    --         False -> return Nothing
