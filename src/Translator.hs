@@ -4,6 +4,7 @@ module Translator where
 
 import Parser
 import Typechecker
+import Data.List
 
 class Translate a g where
     translate :: a -> g -> String
@@ -14,6 +15,11 @@ class TranslateTcCall a i g where
 concatNLs :: [String] -> String
 concatNLs [] = []
 concatNLs (xs:xss) = xs ++ "\n" ++ concatNLs xss
+
+
+getParams :: [Identifier] -> String
+getParams [(Identifier a)] = a
+getParams (Identifier h:tail) = h ++ ", " ++ (getParams tail)
 
 instance Translate IExp Gamma where
     translate (IExpInt a) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = (show a)
@@ -28,6 +34,12 @@ instance Translate Exp Gamma where
     translate (ExpIExp a) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = (translate a (Gamma (Env l, TldMap m, TcDef td, TcImp ti)))
     translate (ExpUnaryFOCall (Identifier id) e1) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = id ++ "(" ++ (translate e1 (Gamma (Env l, TldMap m, TcDef td, TcImp ti))) ++ ")"
     translate (ExpNullaryFOCall (Identifier id)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = id ++ "()"
+    translate (ExpPatternMatchCall e1 _ _ pmes) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "match " ++ (translate e1 (Gamma (Env l, TldMap m, TcDef td, TcImp ti))) ++ " { " ++ "\n" ++ (intercalate ("\n") (zipWith translate (pmes) (take (length pmes) (repeat (Gamma (Env l, TldMap m, TcDef td, TcImp ti)))))) ++ "\n" ++ "}"
+
+instance Translate Pme Gamma where
+    translate (PatternMatchExpression (Identifier cid) [] re) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "{ " ++  cid ++ ":" ++ (translate re (Gamma (Env l, TldMap m, TcDef td, TcImp ti))) ++ "}"
+    translate (PatternMatchExpression (Identifier cid) ((Identifier pid):tail) re) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = cid ++ "(" ++ pid ++ ", " ++ (getParams tail) ++ "):" ++ (translate re (Gamma (Env l, TldMap m, TcDef td, TcImp ti)))
+        
 
 instance TranslateTcCall Exp Type Gamma where
     translateTcCall (TypeclassCallInt (ExpAtomInt num) (Typeclass (Identifier tcName)) (TypeclassFunc (Identifier tcFuncName))) (Type (Identifier t)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "_" ++ tcName ++ tcFuncName ++ t ++ "(" ++ show num ++ ")"
