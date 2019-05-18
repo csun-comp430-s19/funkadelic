@@ -16,8 +16,8 @@ main = do
     case parseResult of
         Right (tlds, exp) -> do
             gamma <- return $ snd (runState (typecheckProgram (tlds, exp)) emptyGamma)
-            return $ translate exp gamma
+            putStrLn $ show $ translate exp gamma
             where emptyGamma = (Gamma (Env [], TldMap [], TcDef [], TcImp []))
-        Left _ -> undefined
+        Left e -> putStrLn $ show e
     
 
