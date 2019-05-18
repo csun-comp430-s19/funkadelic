@@ -45,7 +45,7 @@ instance Translate CDef Gamma where
     translate (UnaryConstructor (Identifier id) (Type (Identifier t))) _  = id ++ ":{x:adt.any}"
 
 instance Translate Tld Gamma where
-    translate (DataDef (Identifier id) c) gamma = "let "++ id ++" =  adt.data({ " ++ (concat $ intersperse "," $ map (flip translate gamma) c) ++ "})" 
+    translate (DataDef (Identifier id) c) gamma = "let "++ id ++" =  adt.data({ " ++ (concat $ intersperse "," $ map (flip translate gamma) c) ++ "});" 
     translate (Func (FuncDefUnary (Identifier fName) (Identifier pName) _ e1 _)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "function " ++ fName ++ "(" ++ pName ++ ") { " ++ (translate e1 (Gamma (Env l, TldMap m, TcDef td, TcImp ti))) ++ " }"
     translate (Func (FuncDefNullary (Identifier fName) e1 _)) gamma = "function " ++ fName ++ "() { " ++ (translate e1 gamma) ++ " }"
     translate (TypeclassDef _ _) _ = ""

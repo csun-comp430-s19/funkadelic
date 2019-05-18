@@ -417,7 +417,7 @@ identifier = do
     return $ Identifier (first:rest)
   where
     firstChar = satisfy (\a -> isLetter a)
-    followingChars = satisfy (\a -> isDigit a || isLetter a)
+    followingChars = satisfy (\a -> isDigit a || isLetter a || a == '.')
 
 -- Extract the function name
 -- Lifts the extracted values into the monad Identifier
