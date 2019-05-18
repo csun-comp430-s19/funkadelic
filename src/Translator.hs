@@ -12,23 +12,33 @@ class Translate a g where
 class TranslateTcCall a i g where
     translateTcCall :: a -> i -> g -> String
 
+getParams :: [Identifier] -> String
+getParams [(Identifier a)] = a
+getParams (Identifier h:tail) = h ++ ", " ++ (getParams tail)
+
 concatNLs :: [String] -> String
 concatNLs [] = []
 concatNLs (xs:xss) = xs ++ "\n" ++ concatNLs xss
 
 instance Translate IExp Gamma where
-    translate (IExpInt a) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = (show a)
-    translate (IExpVar (Identifier a)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = a
-    translate (IExp ie1 iBinOp ie2) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = translate ie1 (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) ++ " "++ (show iBinOp) ++ " " ++ translate ie2 (Gamma (Env l, TldMap m, TcDef td, TcImp ti))
+    translate (IExpInt a) _ = (show a)
+    translate (IExpVar (Identifier a)) _ = a
+    translate (IExp ie1 iBinOp ie2) gamma = translate ie1 gamma ++ " "++ (show iBinOp) ++ " " ++ translate ie2 gamma
 
 instance Translate Exp Gamma where
-    translate (ExpVariable (Identifier id)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = id
-    translate (ExpInteger a) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = (show a)
-    translate (ExpString a) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = (show a)
-    translate (ExpLambda e1 _ e2 _) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "function(" ++ (translate e1 (Gamma (Env l, TldMap m, TcDef td, TcImp ti))) ++ ") {" ++ (translate e2 (Gamma (Env l, TldMap m, TcDef td, TcImp ti))) ++ "}"
-    translate (ExpIExp a) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = (translate a (Gamma (Env l, TldMap m, TcDef td, TcImp ti)))
-    translate (ExpUnaryFOCall (Identifier id) e1) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = id ++ "(" ++ (translate e1 (Gamma (Env l, TldMap m, TcDef td, TcImp ti))) ++ ")"
-    translate (ExpNullaryFOCall (Identifier id)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = id ++ "()"
+    translate (ExpVariable (Identifier id)) _ = id
+    translate (ExpInteger a) _ = (show a)
+    translate (ExpString a) _ = (show a)
+    translate (ExpLambda e1 _ e2 _) gamma = "function(" ++ (translate e1 gamma) ++ ") {" ++ (translate e2 gamma) ++ "}"
+    translate (ExpIExp a) gamma = (translate a gamma)
+    translate (ExpUnaryFOCall (Identifier id) e1) gamma = id ++ "(" ++ (translate e1 gamma) ++ ")"
+    translate (ExpNullaryFOCall (Identifier id)) _ = id ++ "()"
+    translate (ExpPatternMatchCall e1 _ _ pmes) gamma = "match " ++ (translate e1 gamma) ++ " { " ++ (intercalate (" ") (zipWith translate (pmes) (take (length pmes) (repeat gamma)))) ++ "}"
+
+instance Translate Pme Gamma where
+    translate (PatternMatchExpression (Identifier cid) [] re) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) =  cid ++ ": " ++ (translate re (Gamma (Env l, TldMap m, TcDef td, TcImp ti)))
+    translate (PatternMatchExpression (Identifier cid) ((Identifier pid):tail) re) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = cid ++ "(" ++ pid ++ ", " ++ (getParams tail) ++ "): " ++ (translate re (Gamma (Env l, TldMap m, TcDef td, TcImp ti)))
+
 
 instance TranslateTcCall Exp Type Gamma where
     translateTcCall (TypeclassCallInt (ExpAtomInt num) (Typeclass (Identifier tcName)) (TypeclassFunc (Identifier tcFuncName))) (Type (Identifier t)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "_" ++ tcName ++ tcFuncName ++ t ++ "(" ++ show num ++ ")"

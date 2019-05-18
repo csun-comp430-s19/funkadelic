@@ -41,12 +41,12 @@ spec = do
     describe "Constructor Definitionss" $ do
         it "translates Constructor definitions into javascript" $ do
             let typeEnv = (Gamma (Env [], TldMap [], TcDef [], TcImp []))
-            translate (NullaryConstructor $ Identifier "Nullary") typeEnv `shouldBe` "Nullary:{}"
+            translate (NullaryConstructor $ Identifier "Nullary") typeEnv `shouldBe` "Nullary: null"
 
     describe "Top Level Definitions" $ do
         it "translates a Top Level Definition into javascript" $ do
             let typeEnv = (Gamma (Env [], TldMap [], TcDef [], TcImp []))
-            translate (DataDef (Identifier "x") [NullaryConstructor $ Identifier "Nullary"]) typeEnv `shouldBe` "let x = Data(function(){ Nullary:{}};"
+            translate (DataDef (Identifier "x") [NullaryConstructor $ Identifier "Nullary"]) typeEnv `shouldBe` "let x =  adt.data({ Nullary: null});"
             translate (Func (FuncDefUnary (Identifier "funk") (Identifier "a") (Type $ Identifier "string") (ExpVariable $ Identifier "a") (Type $ Identifier "string"))) typeEnv `shouldBe` "function funk(a) { a }"
             translate (Func (FuncDefNullary (Identifier "funk") (ExpVariable $ Identifier "a") (Type $ Identifier "string"))) typeEnv `shouldBe` "function funk() { a }"
             translate (TypeclassImp (Identifier "equals") [SigImp (Identifier "eq") (Type (Identifier "Int")) (Type (Identifier "String")) (Identifier "a") (ExpVariable (Identifier "a")),SigImp (Identifier "eq") (Type (Identifier "Str")) (Type (Identifier "Int")) (Identifier "b") (ExpIExp (IExp (IExpVar (Identifier "b")) Plus (IExpInt 1)))]) typeEnv `shouldBe` "function _equalseqInt(a) { a }\nfunction _equalseqStr(b) { b + 1 }\n"

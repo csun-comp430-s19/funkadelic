@@ -113,7 +113,11 @@ data Pme =
     PatternMatchExpression Identifier [Identifier] Exp
     deriving(Show, Eq)
 
-parseProgram path = parseFromFile programParser path
+parseFile p fname
+    = do input <- readFile fname
+         return (runP p () fname (removeSpaces input))
+
+parseProgram path = parseFile programParser path
 
 -- shortcut for constructing a type
 mkType :: String -> Type 
@@ -465,9 +469,9 @@ string' = do
     char '"'
     return $ concat strings
 
--- Removes spaces from a string
+-- Removes whitespaces from a string
 removeSpaces :: String -> String
-removeSpaces = filter (/=' ')
+removeSpaces = filter (not . flip elem " \r\n")
 
 parseInput input = parse (many unaryFDef) "failed" (removeSpaces input)
 
