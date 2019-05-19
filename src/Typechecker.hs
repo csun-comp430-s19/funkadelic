@@ -17,6 +17,15 @@ data TldMap = TldMap [(Type, [CDef])] deriving (Show)
 data TcDef = TcDef [(Identifier, [SignatureDef])] deriving (Show)
 data TcImp = TcImp [(Identifier, [SignatureImp])] deriving (Show)
 
+typecheckProgram :: ([Tld], Exp) -> State Gamma (Maybe Type)
+typecheckProgram (tlds, exp) = do
+    _ <- mapM typecheck tlds
+    _ <- typecheck exp
+    gamma <- get
+    return (Just (Type (Identifier "good")))
+    
+    
+
 
 addEntryToEnv :: Identifier -> Type -> Gamma -> Gamma
 addEntryToEnv n t (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = Gamma (Env (l ++ [(n,t)]), TldMap m, TcDef td, TcImp ti)
@@ -333,3 +342,13 @@ instance Typecheck Exp where
             case t of
                 Nothing -> return Nothing
                 Just t -> return $ join $ getImpType tc tcfun t gamma
+    typecheck (ExpTuple exps (ProductType types)) = head $ zipWith typecheckElement exps types
+
+typecheckElement :: Exp -> Type -> State Gamma (Maybe Type)
+typecheckElement e t = do
+    mEt <- typecheck e
+    case mEt of
+        Just et -> case t == et of
+            True -> return (Just t)
+            False -> return Nothing
+        Nothing -> return Nothing
