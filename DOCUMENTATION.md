@@ -13,35 +13,37 @@ Funkadelic was designed to be a minimalist statically-typed generic functional p
 
 ## Code snippets
 
-#### Generic functionality
-
-`datanewType=Calculate(Integer)`
+`data myType = Calculator(Integer) | Destroyer(String)`
 
 Here is an example of defining a new type.
 
-`funk=func():string{a}`
-
-`anotherFunk=func(a:string):string{a}`
-
+`func = funk():string{"a"}`
+`func = id(x:string):string{x}`
 
 Here are examples of function declarations.
 
-
 `funk()`
- 
-`anotherFunk("Hello")`
+
+`id("Hello")`
 
 Here are examples of calling the functions above.
 
 #### Algebraic Data Types
 
-`<1,2,3,4>`
+`<1,2,3,4>:<int, int, int, int>`
 
 Here is an example of a product type.
 
+`data sumType = c1(Integer) | c2(String)`
+
+Here is an example of a sum type.
+
 #### Pattern Matching
 
-`"case 12:Integer of:String name()->\"xyz\"other()->\"abc\""`
+`"case (X):String{`
+    `name()->\"xyz\"`
+    `other()->\"abc\""`
+`}`
 
 Here is an example of pattern matching. As we can see, our pattern matching is in the form of a case statement which allows for control flow.
 

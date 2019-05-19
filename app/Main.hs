@@ -16,7 +16,7 @@ main = do
     case parseResult of
         Right (tlds, exp) -> do
             gamma <- return $ snd (runState (typecheckProgram (tlds, exp)) emptyGamma)
-            putStrLn $ concat (translatedTlds gamma ++ [translatedExp gamma])
+            writeFile "./out.js" $ "var adt = require('adt');" ++ concat (translatedTlds gamma ++ [translatedExp gamma])
             where 
                 emptyGamma = (Gamma (Env [], TldMap [], TcDef [], TcImp []))
                 translatedTlds gamma = map ((flip translate) gamma) tlds 
