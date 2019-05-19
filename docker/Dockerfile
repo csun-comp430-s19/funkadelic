@@ -9,5 +9,4 @@ RUN apt-get update && \
 
 WORKDIR Funkadelic
 
-RUN stack build && \
-    stack test
+RUN stack build
