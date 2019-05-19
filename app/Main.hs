@@ -22,9 +22,5 @@ main = do
                 translatedTlds gamma = map ((flip translate) gamma) tlds 
                 translatedExp gamma = translate exp gamma
         Left e -> putStrLn $ show e
-        -- Right (tlds, exp) -> do
-        --     putStrLn $ concat $ map show tlds
-        --     where emptyGamma = (Gamma (Env [], TldMap [], TcDef [], TcImp []))
-        -- Left e -> putStrLn $ show e
     
 

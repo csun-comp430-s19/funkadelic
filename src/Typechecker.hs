@@ -62,8 +62,6 @@ insertTcImpsToGamma n s (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = do
             let newTi = x ++ newTcImps : ys
             return (Gamma (Env l, TldMap m, TcDef td, TcImp newTi))
 
-getType :: Identifier -> Gamma -> Maybe Type
-
 getIdentifiers :: Type -> Gamma -> [CDef]
 getIdentifiers t (Gamma (_, TldMap m, _, _)) = do
     case Data.Map.lookup t gMap  of
@@ -95,6 +93,8 @@ getTypesFromPme (PatternMatchExpression a _ _) (NullaryConstructor i) = do
                         False -> return Nothing
                 Nothing -> return Nothing
         Nothing -> return Nothing
+
+getType :: Identifier -> Gamma -> Maybe Type
 getType x (Gamma (Env l, _, _, _)) = Data.Map.lookup x gMap
     where
         gMap = fromList l
@@ -313,22 +313,22 @@ instance Typecheck Exp where
     typecheck (ExpNullaryFOCall fName) = do
         gamma <- get
         return $ getType fName gamma
-    typecheck (ExpPatternMatchCall e1 paramType returnType pmes) = do 
-        e1t <- typecheck e1
+    typecheck (ExpPatternMatchCall e1 returnType pmes) = do 
         gamma <- get 
-        case e1t == (Just paramType) of
-            True -> do
-                case getIdentifiers paramType gamma of
+        e1t <- return $ getType e1 gamma
+        case e1t of
+            Just t ->
+                case getIdentifiers t gamma of
                     constructs -> do
                         listPmeTypes <- sequence $ zipWith getTypesFromPme pmes constructs
                         case reduceList listPmeTypes of
                             Just a -> do
-                                pmeTypeResults <- sequence $ zipWith pmeTypeCheck pmes (Prelude.take (length pmes) (repeat (paramType, returnType)))
+                                pmeTypeResults <- sequence $ zipWith pmeTypeCheck pmes (Prelude.take (length pmes) (repeat (t, returnType)))
                                 case reduceList pmeTypeResults of
                                     Just b -> return (Just returnType)
                                     Nothing -> return Nothing
                             Nothing -> return Nothing                         
-            False -> return Nothing
+            Nothing -> return Nothing
         
     typecheck (TypeclassCallInt (ExpAtomInt _) (Typeclass tc) (TypeclassFunc tcfun)) = do
         gamma <- get

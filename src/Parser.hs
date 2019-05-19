@@ -104,7 +104,7 @@ data Exp =
     |   ExpLambda Exp Type Exp Type
     |   ExpUnaryFOCall Identifier Exp
     |   ExpNullaryFOCall Identifier
-    |   ExpPatternMatchCall Exp Type Type [Pme]
+    |   ExpPatternMatchCall Identifier Type [Pme]
     |   TypeclassCallVar ExpAtom Typeclass TypeclassFunc -- varName tcName tcFuncName
     |   TypeclassCallInt ExpAtom Typeclass TypeclassFunc -- varName tcName tcFuncName
     |   TypeclassCallStr ExpAtom Typeclass TypeclassFunc -- varName tcName tcFuncName
@@ -142,7 +142,7 @@ tldParser =
     try dDef 
     <|> try tldFunctionParser
     <|> try tDef
-    <|> tImp
+    <|> try tImp
 
 tldFunctionParser :: Parser Tld
 tldFunctionParser = do
@@ -212,12 +212,12 @@ tuple = do
 -- Parser for an expression
 expParser :: Parser Exp
 expParser = 
-    try unaryFOCall
+        try patternMatchCall
+    <|> try unaryFOCall
     -- <|> try let'
     <|> try tuple
     <|> try nullaryFOCall
     <|> try lambda
-    <|> try patternMatchCall
     <|> try tCallVar
     <|> try tCallInt
     <|> try tCallStr
@@ -339,8 +339,9 @@ tCallStr = do
 -- Lifts the extracted values into the monad FuncDefUnary
 unaryFDef :: Parser Function
 unaryFDef = do
+    _ <- string "func="
     name <- identifier
-    _ <- string "=func("
+    _ <- char '('
     paramName <- identifier
     _ <- char ':'
     paramType <- Type <$> identifier
@@ -355,8 +356,9 @@ unaryFDef = do
 -- Lifts the extracted values into the monad FuncDefNullary
 nullaryFDef :: Parser Function
 nullaryFDef = do
+    _ <- string "func="
     name <- identifier
-    _ <- string "=func():"
+    _ <- string "():"
     retType <- Type <$> identifier
     _ <- char '{'
     body <- expParser
@@ -401,15 +403,14 @@ nullaryFOCall = do
 
 patternMatchCall :: Parser Exp
 patternMatchCall = do
-    _ <- string "case "
-    pattern <- expParser
-    _ <- char ':'
-    expType <- Type <$> identifier
-    _ <- string " of:"
+    _ <- string "case("
+    pattern <- identifier
+    _ <- string "):"
     retType <- Type <$> identifier
-    _ <- char ' '
+    _ <- char '{'
     cases <- many1 pmeParser
-    return $ ExpPatternMatchCall pattern expType retType cases
+    _ <- char '}'
+    return $ ExpPatternMatchCall pattern retType cases
     
 pmeParser :: Parser Pme
 pmeParser = do
@@ -425,11 +426,10 @@ pmeParser = do
 -- Note: Identifiers must start with an alphabetical character
 identifier :: Parser Identifier
 identifier = do
-    first <- firstChar -- should be a letter
+    first <- letter -- should be a letter
     rest <- many followingChars
     return $ Identifier (first:rest)
   where
-    firstChar = satisfy (\a -> isLetter a)
     followingChars = satisfy (\a -> isDigit a || isLetter a || a == '.')
 
 -- Extract the function name
@@ -480,7 +480,7 @@ string' = do
 
 -- Removes whitespaces from a string
 removeSpaces :: String -> String
-removeSpaces = filter (not . flip elem " \r\n")
+removeSpaces = filter (not . flip elem " \r\n\t")
 
 parseInput input = parse (many unaryFDef) "failed" (removeSpaces input)
 
