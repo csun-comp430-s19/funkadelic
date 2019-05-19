@@ -13,8 +13,6 @@ Funkadelic was designed to be a minimalist statically-typed generic functional p
 
 ## Code snippets
 
-#### Generic functionality
-
 `data myType = Calculator(Integer) | Destroyer(String)`
 
 Here is an example of defining a new type.
@@ -22,12 +20,10 @@ Here is an example of defining a new type.
 `func = funk():string{"a"}`
 `func = id(x:string):string{x}`
 
-
 Here are examples of function declarations.
 
-
 `funk()`
- 
+
 `id("Hello")`
 
 Here are examples of calling the functions above.
