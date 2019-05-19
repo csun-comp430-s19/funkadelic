@@ -29,16 +29,23 @@ instance Translate Exp Gamma where
     translate (ExpVariable (Identifier id)) _ = id
     translate (ExpInteger a) _ = (show a)
     translate (ExpString a) _ = (show a)
+    translate (ExpTuple exps _) gamma = "{" ++ translateTupleElements exps gamma 1 ++ "}"
     translate (ExpLambda e1 _ e2 _) gamma = "function(" ++ (translate e1 gamma) ++ ") {" ++ (translate e2 gamma) ++ "}"
     translate (ExpIExp a) gamma = (translate a gamma)
     translate (ExpUnaryFOCall (Identifier id) e1) gamma = id ++ "(" ++ (translate e1 gamma) ++ ")"
     translate (ExpNullaryFOCall (Identifier id)) _ = id ++ "()"
     translate (ExpPatternMatchCall e1 _ _ pmes) gamma = "match " ++ (translate e1 gamma) ++ " { " ++ (intercalate (" ") (zipWith translate (pmes) (take (length pmes) (repeat gamma)))) ++ "}"
 
+translateTupleElements' :: [Exp] -> Gamma -> Int -> String -> String
+translateTupleElements' [] gamma c str = str
+translateTupleElements' (x:xs) gamma c str = translateTupleElements' xs gamma (c + 1) (str ++ (translate x gamma))
+
+translateTupleElements :: [Exp] -> Gamma -> Int -> String
+translateTupleElements exps gamma c = translateTupleElements' exps gamma 0 ""
+
 instance Translate Pme Gamma where
     translate (PatternMatchExpression (Identifier cid) [] re) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) =  cid ++ ": " ++ (translate re (Gamma (Env l, TldMap m, TcDef td, TcImp ti)))
     translate (PatternMatchExpression (Identifier cid) ((Identifier pid):tail) re) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = cid ++ "(" ++ pid ++ ", " ++ (getParams tail) ++ "): " ++ (translate re (Gamma (Env l, TldMap m, TcDef td, TcImp ti)))
-
 
 instance TranslateTcCall Exp Type Gamma where
     translateTcCall (TypeclassCallInt (ExpAtomInt num) (Typeclass (Identifier tcName)) (TypeclassFunc (Identifier tcFuncName))) (Type (Identifier t)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "_" ++ tcName ++ tcFuncName ++ t ++ "(" ++ show num ++ ")"
@@ -47,8 +54,6 @@ instance TranslateTcCall Exp Type Gamma where
         case getType (Identifier var) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) of
             Nothing -> ("FAIL. TYPE NOT FOUND IN GAMMA FOR " ++ var)
             Just (Type (Identifier t)) -> ( "_" ++ tcName ++ tcFuncName ++ t ++ "(" ++ var ++ ")" )
-
-
 
 instance Translate CDef Gamma where
     translate (NullaryConstructor (Identifier id)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = id ++ ": null"

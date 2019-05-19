@@ -15,7 +15,8 @@ import Text.ParserCombinators.Parsec
 -- which derives the typeclasses show and eq
 -- Takes in an Identifier in its constructor
 data Type = 
-        Type Identifier 
+        Type Identifier
+    |   ProductType [Type]
     |   FunctionType Type Type
     deriving (Show, Eq, Ord)
 
@@ -96,7 +97,7 @@ data ExpAtom =
 data Exp = 
         ExpVariable Identifier
     -- |   ExpLet Identifier Exp Type Exp 
-    |   ExpProduct [Exp]
+    |   ExpTuple [Exp] Type
     |   ExpInteger Integer
     |   ExpString String
     |   ExpIExp IExp
@@ -122,6 +123,9 @@ parseProgram path = parseFile programParser path
 -- shortcut for constructing a type
 mkType :: String -> Type 
 mkType t = Type $ Identifier t
+
+mkTypeFromIdentifier :: Identifier -> Type
+mkTypeFromIdentifier (Identifier s) = mkType s
 
 mkFuncType :: String -> String -> Type
 mkFuncType p r = (FunctionType (Type $ Identifier p) (Type $ Identifier r))
@@ -196,19 +200,21 @@ sigImpParser = do
 --     return $ ExpLet name value t exp
 
 -- parser for product type expressions
-product' :: Parser Exp
-product' = do
+tuple :: Parser Exp
+tuple = do
     _ <- char '<'
     exps <- sepBy expParser (char ',')
+    _ <- string ">:<"
+    types <- sepBy identifier (char ',')
     _ <- char '>'
-    return $ ExpProduct exps
+    return $ ExpTuple exps $ ProductType (map mkTypeFromIdentifier types)
 
 -- Parser for an expression
 expParser :: Parser Exp
 expParser = 
     try unaryFOCall
     -- <|> try let'
-    <|> try product'
+    <|> try tuple
     <|> try nullaryFOCall
     <|> try lambda
     <|> try patternMatchCall
@@ -356,6 +362,9 @@ nullaryFDef = do
     body <- expParser
     _ <- char '}'
     return $ FuncDefNullary name body retType
+
+
+
 
 -- Extract the parameter, body, and return type
 -- Lifts the extracted values into the monad ExpLambda

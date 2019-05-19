@@ -342,3 +342,13 @@ instance Typecheck Exp where
             case t of
                 Nothing -> return Nothing
                 Just t -> return $ join $ getImpType tc tcfun t gamma
+    typecheck (ExpTuple exps (ProductType types)) = head $ zipWith typecheckElement exps types
+
+typecheckElement :: Exp -> Type -> State Gamma (Maybe Type)
+typecheckElement e t = do
+    mEt <- typecheck e
+    case mEt of
+        Just et -> case t == et of
+            True -> return (Just t)
+            False -> return Nothing
+        Nothing -> return Nothing
