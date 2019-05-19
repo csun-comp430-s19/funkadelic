@@ -34,7 +34,7 @@ instance Translate Exp Gamma where
     translate (ExpIExp a) gamma = (translate a gamma)
     translate (ExpUnaryFOCall (Identifier id) e1) gamma = id ++ "(" ++ (translate e1 gamma) ++ ")"
     translate (ExpNullaryFOCall (Identifier id)) _ = id ++ "()"
-    translate (ExpPatternMatchCall e1 _ _ pmes) gamma = "match " ++ (translate e1 gamma) ++ " { " ++ (intercalate (" ") (zipWith translate (pmes) (take (length pmes) (repeat gamma)))) ++ "}"
+    translate (ExpPatternMatchCall (Identifier p) _ pmes) gamma = "match " ++ p ++ " { " ++ (intercalate (" ") (zipWith translate (pmes) (take (length pmes) (repeat gamma)))) ++ "}"
 
 translateTupleElements' :: [Exp] -> Gamma -> Int -> String -> String
 translateTupleElements' [] gamma c str = str
@@ -61,8 +61,8 @@ instance Translate CDef Gamma where
 
 instance Translate Tld Gamma where
     translate (DataDef (Identifier id) c) gamma = "let "++ id ++" =  adt.data({ " ++ (concat $ intersperse "," $ map (flip translate gamma) c) ++ "});" 
-    translate (Func (FuncDefUnary (Identifier fName) (Identifier pName) _ e1 _)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "function " ++ fName ++ "(" ++ pName ++ ") { " ++ (translate e1 (Gamma (Env l, TldMap m, TcDef td, TcImp ti))) ++ " }"
-    translate (Func (FuncDefNullary (Identifier fName) e1 _)) gamma = "function " ++ fName ++ "() { " ++ (translate e1 gamma) ++ " }"
+    translate (Func (FuncDefUnary (Identifier fName) (Identifier pName) _ e1 _)) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = "function " ++ fName ++ "(" ++ pName ++ ") { return " ++ (translate e1 (Gamma (Env l, TldMap m, TcDef td, TcImp ti))) ++ " }"
+    translate (Func (FuncDefNullary (Identifier fName) e1 _)) gamma = "function " ++ fName ++ "() { return " ++ (translate e1 gamma) ++ " }"
     translate (TypeclassDef _ _) _ = ""
     translate (TypeclassImp (Identifier tcName) imps) (Gamma (Env l, TldMap m, TcDef td, TcImp ti)) = (concatNLs (map imp2Fun imps))
         where 

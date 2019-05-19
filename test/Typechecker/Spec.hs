@@ -58,11 +58,11 @@ spec = do
             let typeEnv = (Gamma (Env [(Identifier "x", mkType "Int")], TldMap [], TcDef [],  TcImp [(Identifier "add", [SigImp (Identifier "addOne") (Type (Identifier "Int")) (Type (Identifier "String")) (Identifier "a") (ExpInteger 1)])]))
             (evalState (typecheck (TypeclassCallVar (ExpAtomVar (Identifier "x")) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne")))) typeEnv) `shouldBe` stringType
             let typeEnv = (Gamma (Env [(Identifier "x", mkType "funType"), (Identifier "name", mkType "funType"), (Identifier "Thing", mkType "Int")], TldMap [(Type $ Identifier "funType", [UnaryConstructor (Identifier "name") (Type $ Identifier "Integer")])], TcDef [], TcImp []))
-            (evalState (typecheck (ExpPatternMatchCall (ExpVariable $ Identifier "x") (Type $ Identifier "funType") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [Identifier "thing"] (ExpString "xyz")] )) typeEnv) `shouldBe` stringType
+            (evalState (typecheck (ExpPatternMatchCall (Identifier "x") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [Identifier "thing"] (ExpString "xyz")] )) typeEnv) `shouldBe` stringType
             let typeEnv = (Gamma (Env [(Identifier "x", mkType "funType"), (Identifier "name", mkType "funType")], TldMap [(Type $ Identifier "funType", [NullaryConstructor (Identifier "name") ])], TcDef [], TcImp []))
-            (evalState (typecheck (ExpPatternMatchCall (ExpVariable $ Identifier "x") (Type $ Identifier "funType") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [] (ExpString "xyz")] )) typeEnv) `shouldBe` stringType
+            (evalState (typecheck (ExpPatternMatchCall (Identifier "x") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [] (ExpString "xyz")] )) typeEnv) `shouldBe` stringType
             let typeEnv = (Gamma (Env [(Identifier "x", mkType "funType"), (Identifier "name", mkType "funType"), (Identifier "other", mkType "funType")], TldMap [(Type $ Identifier "funType", [NullaryConstructor (Identifier "name"), NullaryConstructor (Identifier "other") ])], TcDef [], TcImp []))
-            (evalState (typecheck (ExpPatternMatchCall (ExpVariable $ Identifier "x") (Type $ Identifier "funType") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [] (ExpString "xyz"), PatternMatchExpression (Identifier "other") [] (ExpString "abc")] )) typeEnv) `shouldBe` stringType
+            (evalState (typecheck (ExpPatternMatchCall (Identifier "x") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [] (ExpString "xyz"), PatternMatchExpression (Identifier "other") [] (ExpString "abc")] )) typeEnv) `shouldBe` stringType
 
 
         it "FAILS on bad typechecker input" $ do
@@ -83,10 +83,10 @@ spec = do
             (evalState (typecheck (TypeclassCallVar (ExpAtomVar (Identifier "x")) (Typeclass (Identifier "add")) (TypeclassFunc (Identifier "addOne")))) typeEnv) `shouldBe` Nothing
 
             let typeEnv = (Gamma (Env [(Identifier "x", mkType "funType"), (Identifier "name", mkType "funType")], TldMap [(Type $ Identifier "funType", [NullaryConstructor (Identifier "name") ])], TcDef [], TcImp []))
-            (evalState (typecheck (ExpPatternMatchCall (ExpVariable $ Identifier "x") (Type $ Identifier "Integer") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [] (ExpString "xyz")] )) typeEnv) `shouldBe` Nothing
+            (evalState (typecheck (ExpPatternMatchCall (Identifier "x") (Type $ Identifier "Integer") [PatternMatchExpression (Identifier "name") [] (ExpString "xyz")] )) typeEnv) `shouldBe` Nothing
 
             let typeEnv = (Gamma (Env [(Identifier "x", mkType "funType"), (Identifier "name", mkType "funType")], TldMap [], TcDef [], TcImp []))
-            (evalState (typecheck (ExpPatternMatchCall (ExpVariable $ Identifier "x") (Type $ Identifier "funType") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [] (ExpString "xyz")] )) typeEnv) `shouldBe` Nothing
+            (evalState (typecheck (ExpPatternMatchCall (Identifier "x") (Type $ Identifier "String") [PatternMatchExpression (Identifier "name") [] (ExpString "xyz")] )) typeEnv) `shouldBe` Nothing
 
 
     describe "typechecking tlds" $ do
