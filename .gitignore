@@ -1,3 +1,6 @@
 .stack-work/
 Funkadelic.cabal
 *~
+out\.js
+
+src\.fk
