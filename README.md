@@ -86,6 +86,10 @@ Assuming node, npm, and (node install adt) are all installed:
 
 Docker version (must be in docker directory):
 - ./execute_compiled.sh
+
+## How do I uninstall your docker image?
+Docker version (must be in docker directory):
+- ./uninstall
 ## Formal syntax definition
 **Syntax:**
 
