@@ -67,19 +67,20 @@ Notice that addTwo is not defined. Therefore, this will result in a typechecking
 
 ## Known limitations
 Funkadelic only contains functions of maximum arity 1.
-## Knowing what you know now, what would you do differently?
-- Learn Haskell more along the way to be able to use the language more effectively. 
+
 ## How do I compile your compiler?
 - Install <a href="https://docs.haskellstack.org/en/stable/README/">Stack</a>
 
 Docker version (must be in docker directory):
 - Install <a href="https://docs.docker.com/install/">Docker</a>
 - ./install.sh
+
 ## How do I run your compiler?
 - stack run Funkadelic-exe IN_FILEPATH
 
 Docker version (must be in docker directory):
 - ./compile.sh IN_FILEPATH
+
 ## How do I run the compiled code?
 Assuming node, npm, and (node install adt) are all installed:
 - node out.js
@@ -88,8 +89,9 @@ Docker version (must be in docker directory):
 - ./execute_compiled.sh
 
 ## How do I uninstall your docker image?
-Docker version (must be in docker directory):
+(must be in docker directory):
 - ./uninstall
+
 ## Formal syntax definition
 **Syntax:**
 
